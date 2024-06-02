@@ -26,8 +26,9 @@ def open_connection():
     db_password = get_db_password()
     db_host = get_db_host()
     db_port = get_db_port()
+    db_name = get_db_name()
     
-    uri = f"mongodb://{db_user}:{db_password}@{db_host}:{db_port}"
+    uri = f"mongodb://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?retryWrites=true&w=majority"
     return MongoClient(uri) 
     
 def close_connection(client):

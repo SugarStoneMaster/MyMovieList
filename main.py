@@ -1,6 +1,7 @@
 import os 
 import pandas as pd
 import requests 
+from datetime import datetime 
 from tqdm import tqdm
 from utils.connection import open_connection, close_connection, get_db_name
 from dotenv import load_dotenv
@@ -20,9 +21,9 @@ def get_movie_cover(api_key, imdb_id=None, title=None, year=None):
         if 'Poster' in data and data['Poster'] != 'N/A':
             return data['Poster']
         else:
-            return "Cover not available"
+            return None
     else:
-        return "Error fetching data"
+        return None
 
 
 def insert_movies(movieColl, data):
@@ -54,12 +55,16 @@ def insert_movies(movieColl, data):
 
             if column not in ["cast", "genres", "production_companies", "production_countries", "spoken_languages", 
                                 "director", "director_of_photography", "writers", "producers", "music_composer"]:
+                # convert release_date string to datetime 
+                if column == "release_date":
+                    value = datetime.strptime(value, "%Y-%m-%d").isoformat()
+                    
                 movie[column] = value
             else:
                 if value is None:
                     movie[column] = []
                 else:
-                    movie[column] = value.split(",")
+                    movie[column] = value.split(", ")
         
         # add the ratings field --> SUBSET PATTERN
         movie["ratings"] = []
@@ -98,6 +103,9 @@ def main():
      # the subset design pattern is a design pattern that allows us to store a subset of the data in a collection    
      # in this case, we store the 5 most recent ratings for each movie in the Movie collection and all the ratings in the Rating collection
      
+     # USER - MOVIE: SUBSET DESIGN PATTERN 
+     # we will use the subset design pattern for the user's watchlist 
+     
      # RATING - USER: EXTENDED REFERENCE DESIGN PATTERN
      # source: https://www.mongodb.com/blog/post/building-with-patterns-the-extended-reference-pattern
      # for the rating and user collections, we will use the extended reference design pattern
@@ -105,9 +113,9 @@ def main():
      # we will store the embed the most accessed user data in the rating document and perform join operations only when needed
     
     # create Movie collection
-    movieColl = db.movie
+    movieColl = db["movie"]
     # # create Rating collection
-    ratingColl = db.rating
+    ratingColl = db["rating"]
     
     # # create User collection and the validation schema which ensures that each user document will have the same structure
     userColl = db.create_collection("user", validator={
@@ -144,7 +152,7 @@ def main():
                     "maxLength": 16,
                     "description": "'password' must be a string of at least 8 characters and maximum 16 characters, and is required"
                 },
-                "myMovieList": {
+                "watchlist": {
                     "bsonType": "array",
                     "description": "'myMovieList' must be an array of movie objects",
                     "items": {
@@ -167,7 +175,12 @@ def main():
     })
     
     data = pre_process_data("TMDB_all_movies.csv")
-    insert_movies(movieColl, data)
+    movies_ids = insert_movies(movieColl, data)
+    
+    if movies_ids is not None:
+        print(f"Inserted {len(movies_ids)} movies")
+    else:
+        print("No movies were inserted")
     
     close_connection(client)
 
