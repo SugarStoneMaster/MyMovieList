@@ -1,80 +1,86 @@
 import os
 import pandas as pd
-import requests
 
 from typing import Optional
 from datetime import datetime
 
 from tqdm.notebook import tqdm
 from utils.connection import open_connection, close_connection, get_db_name
-from dotenv import load_dotenv
+from utils.apis import get_movie_cover, get_actor_photo_url
+from utils.fakes import generate_user, generate_reviews
 
-load_dotenv()
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, OperationFailure
+    
 
-
-def get_movie_cover(api_key, imdb_id=None, title=None, year=None) -> Optional[str]:
-    if imdb_id:
-        url = f"http://www.omdbapi.com/?i={imdb_id}&apikey={api_key}"
-    else:
-        url = f"http://www.omdbapi.com/?t={title}&apikey={api_key}&y={year}"
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        data = response.json()
-        if 'Poster' in data and data['Poster'] != 'N/A':
-            return data['Poster']
-        else:
-            return None
-    else:
-        return None
-
-
-def insert_movies(movieColl, data) -> list:
+def get_movies_and_troupe(data) -> tuple[list, list]:
     movies = []
-    columns = list(data.columns)
-    api_key = os.getenv("OMDB_API_KEY")
+    troupe = {}
 
-    for idx, movieRow in tqdm(data.iterrows(), desc="Collecting movie entries...", total=len(data)):
+    for idx, movieRow in tqdm(data.iterrows(), desc="Collecting movie entries...", total=1000):
         movie = {}
-        for column in columns:
-            value = movieRow[column]
-
-            # get the movie's poster using OMDb API
-            # consider only 1000 movies (OMDB API has a limit of 1000 requests per day)
-            if column == "imdb_id" and idx < 1000:
-                # if the imbd_id is not available, search the movie by its title and release year
-                if pd.isna(value):
-                    cover_url = get_movie_cover(api_key=api_key, title=movieRow["title"],
-                                                year=movieRow["release_date"].split("-")[-1])
-                else:
-                    cover_url = get_movie_cover(api_key=api_key, imdb_id=value)
-                movie["cover_url"] = cover_url
-
-            # handle NaN values (empty columns)
-            if pd.isna(value):
-                value = None
-
-            if column not in ["cast", "genres", "production_companies", "production_countries", "spoken_languages",
-                              "director", "director_of_photography", "writers", "producers", "music_composer"]:
-                # convert release_date string to datetime 
-                if column == "release_date":
-                    value = datetime.strptime(value, "%Y-%m-%d").isoformat()
-
-                movie[column] = value
-            else:
-                if value is None:
-                    movie[column] = []
-                else:
-                    movie[column] = value.split(", ")
-
-        # add the ratings field --> SUBSET PATTERN
-        movie["ratings"] = []
+        
+        # get the movie's poster using OMDb API
+        # consider only 1000 movies (OMDB API has a limit of 1000 requests per day)
+        if idx >= 1000:
+            break
+     
+        movie["title"] = movieRow["title"]
+        movie["vote_average"] = movieRow["vote_average"]
+        movie["vote_count"] = movieRow["vote_count"]
+        movie["release_date"] = datetime.strptime(movieRow["release_date"], "%Y-%m-%d").isoformat()
+        movie["release_year"] = movieRow["release_year"]
+        movie["overview"] = movieRow["overview"]
+        movie["runtime"] = movieRow["runtime"]
+        movie["budget"] = movieRow["budget"]
+        movie["revenue"] = movieRow["revenue"]
+        movie["popularity"] = movieRow["popularity"]
+        movie["poster"] = get_movie_cover(imdb_id=movieRow["imdb_id"])
+        movie["genres"] = movieRow["genres"].split(", ")
+        movie["production_companies"] = movieRow["production_companies"].split(", ")
+        movie["production_countries"] = movieRow["production_countries"].split(", ")
+        movie["spoken_languages"] = movieRow["spoken_languages"].split(", ")
+        
+        for column in ["cast", "director"]:
+            members = []
+                
+            for member in movieRow[column].split(", "):      
+                members.append({
+                    "full_name": member,
+                })
+                troupe_movie = {
+                    "title": movieRow["title"],
+                    "poster": movie["poster"], 
+                    "release_year": movieRow["release_year"],
+                }
+                if member not in troupe:
+                    troupe[member] = {
+                        "type": "actor" if column == "cast" else "director",
+                        "movies": [troupe_movie]                    }
+                else: 
+                    troupe[member]["movies"].append(troupe_movie)
+        
+            movie["actors" if column == "cast" else "directors"] = members 
+        
+        # add the reviews field --> SUBSET PATTERN
+        movie["reviews"] = []
+        movie["watched_count"] = 0
+        movie["added_count"] = 0
+        
         movies.append(movie)
-
-    result = movieColl.insert_many(movies)
-
-    return result.inserted_ids
+    
+    print(len(movies))
+    troupe_data = []
+    
+    for full_name, data in troupe.items():
+        troupe_data.append({
+            "full_name": full_name,
+            "type": data["type"],
+            "movies": data["movies"],
+            "picture": "https://media-cldnry.s-nbcnews.com/image/upload/t_fit-760w,f_auto,q_auto:best/rockcms/2023-09/kevin-james-king-of-queens-zz-230927-368fe6.jpg"
+        })
+    
+    return movies, troupe_data
 
 
 def pre_process_data(data_path: str) -> pd.DataFrame:
@@ -83,16 +89,17 @@ def pre_process_data(data_path: str) -> pd.DataFrame:
 
     # drop the duplicates
     data = data.drop_duplicates(subset=["id"])
-    data = data.drop(columns=["id"])
+    data = data.drop(columns=["writers", "producers", "music_composer", "director_of_photography"])
     # remove rows with NA values
     clean_data = data.dropna()
     # add release_year
-    clean_data.loc[:, 'release_year'] = clean_data.loc[:, 'release_date'].str.slice(0, 4)
-    # convert 'release_year' to numeric type if needed (e.g., to perform numeric operations)
+    clean_data.loc[:, 'release_year'] = clean_data['release_date'].str.slice(0, 4)
+    # convert 'release_year' to numeric type if needed
     clean_data.loc[:, 'release_year'] = pd.to_numeric(clean_data['release_year'], errors='coerce', downcast='integer')
     # consider only the movies released in the last 30 years
     clean_data = clean_data.loc[(clean_data['release_year'] >= 1995) & (clean_data['release_year'] <= 2025)]
-
+    clean_data.reset_index(drop=True, inplace=True)
+    
     # return the preprocessed data
     return clean_data
 
@@ -125,76 +132,106 @@ def main():
 
     # create Movie collection
     movieColl = db["movie"]
-    # # create Rating collection
-    ratingColl = db["rating"]
-
-    # create User collection and the validation schema which ensures that each user document will have the same
+    # create Rating collection
+    reviewColl = db["review"]
+    # create Troupe collection 
+    troupeColl = db["troupe"]
+    
+    # create User collection. The validation schema ensures that each user document will have the same
     # structure
-    userColl = db.create_collection("user", validator={
-        "$jsonSchema": {
-            "bsonType": "object",
-            "required": ["name", "last_name", "username", "email", "password"],
-            "properties": {
-                "_id": {  # allows the insertion of other documents
-                    "bsonType": "objectId"
-                },
-                "name": {
-                    "bsonType": "string",
-                    "maxLength": 25,
-                    "description": "'name' must be a string and is required. Max 25 characters"
-                },
-                "last_name": {
-                    "bsonType": "string",
-                    "maxLength": 25,
-                    "description": "'last_name' must be a string and is required. Max 25 characters"
-                },
-                "username": {
-                    "bsonType": "string",
-                    "maxLength": 20,
-                    "description": "'username' must be a string and is required. Max 20 characters"
-                },
-                "email": {
-                    "bsonType": "string",
-                    "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-                    "description": "'email' must be a string and match the regular expression pattern"
-                },
-                "password": {
-                    "bsonType": "string",
-                    "minLength": 8,
-                    "maxLength": 16,
-                    "description": "'password' must be a string of at least 8 characters and maximum 16 characters, "
-                                   "and is required"
-                },
-                "watchlist": {
-                    "bsonType": "array",
-                    "description": "'myMovieList' must be an array of movie objects",
-                    "items": {
-                        "bsonType": "object",
-                        "required": ["movieTitle", "watched"],
-                        "properties": {
-                            "movieTitle": {
-                                "bsonType": "string",
-                                "description": "'movieTitle' must be a string and is required"
-                            },
-                            "watched": {
-                                "bsonType": "bool",
-                                "description": "'watched' must be a boolean and is required"
+    if "user" not in db.list_collection_names():
+        userColl = db.create_collection("user", validator={
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": ["username", "email", "password"],
+                "properties": {
+                    "_id": {  # allows the insertion of other documents
+                        "bsonType": "objectId"
+                    },
+                    "username": {
+                        "bsonType": "string",
+                        "maxLength": 20,
+                        "description": "'username' must be a string and is required. Max 20 characters"
+                    },
+                    "email": {
+                        "bsonType": "string",
+                        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                        "description": "'email' must be a string and match the regular expression pattern"
+                    },
+                    "password": {
+                        "bsonType": "string",
+                        "minLength": 8,
+                        "maxLength": 16,
+                        "description": "'password' must be a string of at least 8 characters and maximum 16 characters, "
+                                    "and is required"
+                    },
+                    "moviesList": {
+                        "bsonType": "array",
+                        "description": "'moviesList' must be an array of movie objects",
+                        "items": {
+                            "bsonType": "object",
+                            "required": ["title", "watched"],
+                            "properties": {
+                                "title": {
+                                    "bsonType": "string",
+                                    "description": "'movieTitle' must be a string and is required"
+                                },
+                                "poster": {
+                                    "bsonType": ["string", "null"],
+                                    "maxLength": 2048,
+                                    "description": "'poster' is the url of the movie poster"
+                                },
+                                "watched": {
+                                    "bsonType": "bool",
+                                    "description": "'watched' must be a boolean and is required"
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-    })
+        })
+    else:
+        userColl = db["user"]
 
     data = pre_process_data("TMDB_all_movies.csv")
-    movies_ids = insert_movies(movieColl, data)
+    movies, troupe_data = get_movies_and_troupe(data)
+    print(len(movies))
+    users = generate_user(movies=movies)
+    reviews = generate_reviews(movies=movies, usernames=[user["username"] for user in users])
 
-    if movies_ids is not None:
-        print(f"Inserted {len(movies_ids)} movies")
-    else:
-        print("No movies were inserted")
-
+    moviesIds = movieColl.insert_many(movies)
+    
+    if len(moviesIds.inserted_ids) == 0:
+        close_connection(client)
+        raise ValueError("No movies were inserted")
+    
+    troupeIds = troupeColl.insert_many(troupe_data)
+    
+    if troupeIds.inserted_ids == 0:
+        movieColl.delete_many({})
+        close_connection(client)
+        raise ValueError("No troupe data was inserted")
+    
+    usersIds = userColl.insert_many(users)
+    
+    if usersIds.inserted_ids == 0:
+        troupeColl.delete_many({})
+        movieColl.delete_many({})
+        close_connection(client)
+        raise ValueError("No user was inserted")
+    
+    reviewIds = reviewColl.insert_many(reviews)
+    
+    if reviewIds.inserted_ids == 0:
+        userColl.delete_many({})
+        troupeColl.delete_many({})
+        movieColl.delete_many({})
+        close_connection(client)
+        raise ValueError("No review was inserted")
+    
+    print(f"Inserted {len(moviesIds.inserted_ids)} movies\nInserted {len(troupeIds.inserted_ids)} troupe data\n" + 
+        f"Inserted {len(usersIds.inserted_ids)} users\nInserted {len(reviewIds.inserted_ids)} reviews")
     close_connection(client)
 
 
