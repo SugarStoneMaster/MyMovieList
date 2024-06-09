@@ -17,16 +17,11 @@ def get_movies_and_troupe(data) -> tuple[list, list]:
     movies = []
     troupe = {}
 
-    for idx, movieRow in tqdm(data.iterrows(), desc="Collecting movie entries...", total=1000):
+    for idx, movieRow in tqdm(data.iterrows(), desc="Collecting movie entries...", total=data.shape[0]):
         movie = {}
-        
-        # get the movie's poster using OMDb API
-        # consider only 1000 movies (OMDB API has a limit of 1000 requests per day)
-        if idx >= 1000:
-            break
      
         movie["title"] = movieRow["title"]
-        movie["vote_average"] = movieRow["vote_average"]
+        movie["vote_average"] = round(movieRow["vote_average"], 2)
         movie["vote_count"] = movieRow["vote_count"]
         movie["release_date"] = datetime.strptime(movieRow["release_date"], "%Y-%m-%d").isoformat()
         movie["release_year"] = movieRow["release_year"]
@@ -69,7 +64,6 @@ def get_movies_and_troupe(data) -> tuple[list, list]:
         
         movies.append(movie)
     
-    print(len(movies))
     troupe_data = []
     
     for full_name, data in troupe.items():

@@ -46,7 +46,7 @@ def get_movie_cover(imdb_id=None, title=None, year=None) -> Optional[str]:
         if 'Poster' in data and data['Poster'] != 'N/A':
             return data['Poster']
         else:
-            return None
+            return "https://castlewoodassistedliving.com/wp-content/uploads/2021/01/image-coming-soon-placeholder.png"
     else:
-        return None
+        return "https://castlewoodassistedliving.com/wp-content/uploads/2021/01/image-coming-soon-placeholder.png"
         
