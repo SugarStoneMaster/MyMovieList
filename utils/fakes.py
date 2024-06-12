@@ -12,8 +12,9 @@ def generate_user_movie_list(movies, num_movies: int = 5):
         watched = random.choice([True, False])
         if watched:  # Simulating user watching behavior
             user_movie["watched_count"] = user_movie.get("watched_count", 0) + 1
-            
+
         movie = {
+            "_id": user_movie["_id"],
             "title": user_movie["title"],
             "poster": user_movie["poster"],
             "watched": watched
@@ -28,7 +29,7 @@ def generate_user(movies: list[dict], num_movies_per_user: int = 5, n: int = 200
             "email": fake.email(),
             "password": fake.password(),
             "username": fake.user_name(),
-            "moviesList": generate_user_movie_list(movies, num_movies_per_user)
+            "movies_list": generate_user_movie_list(movies, num_movies_per_user)
         }
         users.append(user)
     return users 

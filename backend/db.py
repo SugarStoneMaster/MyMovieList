@@ -261,10 +261,12 @@ def add_movie_to_user_list(user_id: str, movie_id: str, title: str, poster: str,
     else:
         print("No documents were updated.")
 
+    return result
+
 
 def update_movie_in_user_list(user_id: str, movie_id: str, watched: bool):
     result = db["user"].update_one({"_id": ObjectId(user_id), "movies_list._id": ObjectId(movie_id)},
-                                   {"$set": {"movie_list.$.watched": watched}}
+                                   {"$set": {"movies_list.$.watched": watched}}
                                    )
 
     # Check if the update was successful
@@ -272,6 +274,8 @@ def update_movie_in_user_list(user_id: str, movie_id: str, watched: bool):
         print("Successfully updated the movie's watched status.")
     else:
         print("No documents were updated.")
+
+    return result
 
 
 def delete_movie_from_user_list(user_id: str, movie_id: str):
@@ -284,6 +288,8 @@ def delete_movie_from_user_list(user_id: str, movie_id: str):
         print("Successfully removed the movie from the user's list.")
     else:
         print("No documents were updated.")
+
+    return result
 
 
 def get_movies_user_list(user_id: str, watched: bool):

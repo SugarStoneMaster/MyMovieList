@@ -9,6 +9,7 @@ from bson import json_util, ObjectId
 from datetime import datetime, timedelta
 
 from api.movies import movies_api
+from api.user import user_api
 
 
 # https://stackoverflow.com/questions/44146087/pass-user-built-json-encoder-into-flasks-jsonify
@@ -37,6 +38,7 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
     app.register_blueprint(movies_api)
+    app.register_blueprint(user_api)
     app.json = MongoJsonProvider(app)
     
     @app.route('/', defaults={'path': ''})
