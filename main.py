@@ -11,15 +11,22 @@ from utils.fakes import generate_user, generate_reviews
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure, OperationFailure
-    
+
+from backend.db import *
+from backend.api.movies import *
 
 def get_movies_and_troupe(data) -> tuple[list, list]:
     movies = []
     troupe = {}
 
-    for idx, movieRow in tqdm(data.iterrows(), desc="Collecting movie entries...", total=data.shape[0]):
+    # Convert the DataFrame rows to a list of tuples
+    data_list = list(data.iterrows())
+
+    for idx, movieRow in tqdm(data_list, desc="Collecting movie entries...", total=len(data_list)):
         movie = {}
-     
+        if(idx == 100):
+            break
+
         movie["title"] = movieRow["title"]
         movie["vote_average"] = round(movieRow["vote_average"], 2)
         movie["vote_count"] = movieRow["vote_count"]
@@ -35,37 +42,37 @@ def get_movies_and_troupe(data) -> tuple[list, list]:
         movie["production_companies"] = movieRow["production_companies"].split(", ")
         movie["production_countries"] = movieRow["production_countries"].split(", ")
         movie["spoken_languages"] = movieRow["spoken_languages"].split(", ")
-        
+
         for column in ["cast", "director"]:
             members = []
-                
-            for member in movieRow[column].split(", "):      
+
+            for member in movieRow[column].split(", "):
                 members.append({
                     "full_name": member,
                 })
                 troupe_movie = {
                     "title": movieRow["title"],
-                    "poster": movie["poster"], 
+                    "poster": movie["poster"],
                     "release_year": movieRow["release_year"],
                 }
                 if member not in troupe:
                     troupe[member] = {
                         "type": "actor" if column == "cast" else "director",
                         "movies": [troupe_movie]                    }
-                else: 
+                else:
                     troupe[member]["movies"].append(troupe_movie)
-        
-            movie["actors" if column == "cast" else "directors"] = members 
-        
+
+            movie["actors" if column == "cast" else "directors"] = members
+
         # add the reviews field --> SUBSET PATTERN
         movie["reviews"] = []
         movie["watched_count"] = 0
         movie["added_count"] = 0
-        
+
         movies.append(movie)
-    
+
     troupe_data = []
-    
+
     for full_name, data in troupe.items():
         troupe_data.append({
             "full_name": full_name,
@@ -73,7 +80,7 @@ def get_movies_and_troupe(data) -> tuple[list, list]:
             "movies": data["movies"],
             "picture": "https://media-cldnry.s-nbcnews.com/image/upload/t_fit-760w,f_auto,q_auto:best/rockcms/2023-09/kevin-james-king-of-queens-zz-230927-368fe6.jpg"
         })
-    
+
     return movies, troupe_data
 
 
@@ -93,15 +100,13 @@ def pre_process_data(data_path: str) -> pd.DataFrame:
     # consider only the movies released in the last 30 years
     clean_data = clean_data.loc[(clean_data['release_year'] >= 1995) & (clean_data['release_year'] <= 2025)]
     clean_data.reset_index(drop=True, inplace=True)
-    
+
     # return the preprocessed data
     return clean_data
 
-
-def main():
+def create_db():
     client = open_connection()
     db_name = get_db_name()
-
     if db_name is None:
         raise ValueError("DB_NAME is not set in .env file")
 
@@ -128,9 +133,9 @@ def main():
     movieColl = db["movie"]
     # create Rating collection
     reviewColl = db["review"]
-    # create Troupe collection 
+    # create Troupe collection
     troupeColl = db["troupe"]
-    
+
     # create User collection. The validation schema ensures that each user document will have the same
     # structure
     if "user" not in db.list_collection_names():
@@ -157,7 +162,7 @@ def main():
                         "minLength": 8,
                         "maxLength": 16,
                         "description": "'password' must be a string of at least 8 characters and maximum 16 characters, "
-                                    "and is required"
+                                       "and is required"
                     },
                     "moviesList": {
                         "bsonType": "array",
@@ -195,38 +200,47 @@ def main():
     reviews = generate_reviews(movies=movies, usernames=[user["username"] for user in users])
 
     moviesIds = movieColl.insert_many(movies)
-    
+
     if len(moviesIds.inserted_ids) == 0:
         close_connection(client)
         raise ValueError("No movies were inserted")
-    
+
     troupeIds = troupeColl.insert_many(troupe_data)
-    
+
     if troupeIds.inserted_ids == 0:
         movieColl.delete_many({})
         close_connection(client)
         raise ValueError("No troupe data was inserted")
-    
+
     usersIds = userColl.insert_many(users)
-    
+
     if usersIds.inserted_ids == 0:
         troupeColl.delete_many({})
         movieColl.delete_many({})
         close_connection(client)
         raise ValueError("No user was inserted")
-    
+
     reviewIds = reviewColl.insert_many(reviews)
-    
+
     if reviewIds.inserted_ids == 0:
         userColl.delete_many({})
         troupeColl.delete_many({})
         movieColl.delete_many({})
         close_connection(client)
         raise ValueError("No review was inserted")
-    
-    print(f"Inserted {len(moviesIds.inserted_ids)} movies\nInserted {len(troupeIds.inserted_ids)} troupe data\n" + 
-        f"Inserted {len(usersIds.inserted_ids)} users\nInserted {len(reviewIds.inserted_ids)} reviews")
+
+    print(f"Inserted {len(moviesIds.inserted_ids)} movies\nInserted {len(troupeIds.inserted_ids)} troupe data\n" +
+          f"Inserted {len(usersIds.inserted_ids)} users\nInserted {len(reviewIds.inserted_ids)} reviews")
     close_connection(client)
+def main():
+    client = open_connection()
+    print(get_movies_user_list("66683b8e1c91a183a78a8cc6", True))
+    close_connection(client)
+
+
+
+
+
 
 
 if __name__ == "__main__":

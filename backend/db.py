@@ -7,6 +7,8 @@ docstrings with a short explanation of the task.
 
 Look out for TODO markers for additional help. Good luck!
 """
+import datetime
+
 import bson
 
 from flask import current_app, g
@@ -244,3 +246,55 @@ def sort_movies(offset: int, movies_per_page: int, field: str, order: int = -1,
         return paginate_query(db.movie, movie_query, offset, movies_per_page)
     except Exception as e:
         return e
+
+
+def add_movie_to_user_list(user_id: str, movie_id: str, title: str, poster: str, watched: bool):
+    new_movie = {"_id": ObjectId(movie_id), "title": title, "poster": poster, "watched": watched, "favourite": False}
+
+    db["user"].update_one({"_id": ObjectId(user_id)}, {"$push": {"movies_list": new_movie}})
+
+    #use approximation pattern?
+    result = db["movie"].update_one({"_id": ObjectId(movie_id)}, {"$inc": {"added_count": 1}})
+    # Check if the update was successful
+    if result.modified_count > 0:
+        print("Successfully incremented the added_count field.")
+    else:
+        print("No documents were updated.")
+
+
+def update_movie_in_user_list(user_id: str, movie_id: str, watched: bool):
+    result = db["user"].update_one({"_id": ObjectId(user_id), "movies_list._id": ObjectId(movie_id)},
+                                   {"$set": {"movie_list.$.watched": watched}}
+                                   )
+
+    # Check if the update was successful
+    if result.modified_count > 0:
+        print("Successfully updated the movie's watched status.")
+    else:
+        print("No documents were updated.")
+
+
+def delete_movie_from_user_list(user_id: str, movie_id: str):
+    result = db["user"].update_one({"_id": ObjectId(user_id)},
+                                   {"$pull": {"movies_list": {"_id": ObjectId(movie_id)}}}
+                                   )
+
+    # Check if the update was successful
+    if result.modified_count > 0:
+        print("Successfully removed the movie from the user's list.")
+    else:
+        print("No documents were updated.")
+
+
+def get_movies_user_list(user_id: str, watched: bool):
+    user = db["user"].find_one({"_id": ObjectId(user_id)}, {"movies_list": 1, "_id": 0})
+
+    if user and 'movies_list' in user:
+        # Filter the movies list based on the 'watched' status
+        filtered_movies = [movie for movie in user['movies_list'] if movie.get('watched') == watched]
+        return filtered_movies
+    else:
+        return []
+
+
+#def add_review(user_id: str, username: str, title: str, content: str, date: datetime.date, vote: float):

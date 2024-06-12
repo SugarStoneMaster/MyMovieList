@@ -1,9 +1,7 @@
 import os
 from flask import Blueprint, request, jsonify
-from db import get_movies, get_movies_by_genres, get_movies_by_release_year, sort_movies
-
+from backend.db import *
 from flask_cors import CORS
-
 
 movies_api = Blueprint(
     'movies_api', 'movies_api', url_prefix='/api/movies')
