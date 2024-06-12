@@ -249,6 +249,16 @@ def sort_movies(offset: int, movies_per_page: int, field: str, order: int = -1,
 
 
 def add_movie_to_user_list(user_id: str, movie_id: str, title: str, poster: str, watched: bool):
+    """
+       Add a movie to the user list.
+
+       :param user_id: user id.
+       :param movie_id: movie id.
+       :param title: movie title.
+       :param poster: movie poster.
+       :param watched: if the movie is already watched or to watch.
+       :return: result of the query
+    """
     new_movie = {"_id": ObjectId(movie_id), "title": title, "poster": poster, "watched": watched, "favourite": False}
 
     db["user"].update_one({"_id": ObjectId(user_id)}, {"$push": {"movies_list": new_movie}})
@@ -265,6 +275,14 @@ def add_movie_to_user_list(user_id: str, movie_id: str, title: str, poster: str,
 
 
 def update_movie_in_user_list(user_id: str, movie_id: str, watched: bool):
+    """
+           Update a movie in the user list, changing his watched boolean.
+
+           :param user_id: user id.
+           :param movie_id: movie id.
+           :param watched: if the movie is already watched or to watch.
+           :return: result of the query
+    """
     result = db["user"].update_one({"_id": ObjectId(user_id), "movies_list._id": ObjectId(movie_id)},
                                    {"$set": {"movies_list.$.watched": watched}}
                                    )
@@ -279,6 +297,13 @@ def update_movie_in_user_list(user_id: str, movie_id: str, watched: bool):
 
 
 def delete_movie_from_user_list(user_id: str, movie_id: str):
+    """
+           Delete a movie from the user list.
+
+           :param user_id: user id.
+           :param movie_id: movie id.
+           :return: result of the query
+        """
     result = db["user"].update_one({"_id": ObjectId(user_id)},
                                    {"$pull": {"movies_list": {"_id": ObjectId(movie_id)}}}
                                    )
@@ -293,6 +318,13 @@ def delete_movie_from_user_list(user_id: str, movie_id: str):
 
 
 def get_movies_user_list(user_id: str, watched: bool):
+    """
+           Get all movies in the user list, based on watched boolean.
+
+           :param user_id: user id.
+           :param watched: if the movie is already watched or to watch.
+           :return: movies to watch or movies watched
+        """
     user = db["user"].find_one({"_id": ObjectId(user_id)}, {"movies_list": 1, "_id": 0})
 
     if user and 'movies_list' in user:
