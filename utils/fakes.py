@@ -34,7 +34,7 @@ def generate_user(movies: list[dict], num_movies_per_user: int = 5, n: int = 200
         users.append(user)
     return users 
 
-def generate_reviews(usernames: list[str], movies: list[dict], n: int = 1000) -> list[dict]:
+def generate_reviews(users: list[dict], movies: list[dict], n: int = 1000) -> list[dict]:
     reviews = []
     for _ in range(n):
         movie = random.choice(movies)
@@ -43,11 +43,12 @@ def generate_reviews(usernames: list[str], movies: list[dict], n: int = 1000) ->
         movie["vote_average"] = round((movie.get("vote_average", 0) + vote) / 2, 2)
         
         review = {
-            "username": random.choice(usernames),
+            "user": random.choice(users),
             "title": fake.sentence(),
             "content": fake.text(),
             "vote": vote,
-            "date": fake.date_time_this_year()
+            "date": fake.date_time_this_year(),
+            "movie_id": movie["_id"]
         }
         
         if len(movie["reviews"]) >= 5:

@@ -1,12 +1,12 @@
 import os
-import json 
+import json
 
 from flask import Flask, render_template
 from flask.json.provider import JSONProvider
 from flask_cors import CORS
 
 from bson import json_util, ObjectId
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from api.movies import movies_api
 from api.user import user_api
@@ -25,7 +25,7 @@ class MongoJsonEncoder(json.JSONEncoder):
 class MongoJsonProvider(JSONProvider):
     def dumps(self, obj, **kwargs):
         return json.dumps(obj, **kwargs, cls=MongoJsonEncoder)
-      
+
     def loads(self, s: str | bytes, **kwargs):
         return json.loads(s, **kwargs)
 
@@ -40,7 +40,7 @@ def create_app():
     app.register_blueprint(movies_api)
     app.register_blueprint(user_api)
     app.json = MongoJsonProvider(app)
-    
+
     @app.route('/', defaults={'path': ''})
     @app.route('/<path:path>')
     def serve(path):
