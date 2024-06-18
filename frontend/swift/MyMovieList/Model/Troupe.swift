@@ -8,7 +8,7 @@
 import Foundation
 
 
-class Troupe
+class Troupe: Identifiable, Codable
 {
     var full_name: String
     var picture: String

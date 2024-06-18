@@ -383,10 +383,9 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
     return review.inserted_id
 
 
-def update_review(review_id: str, username: str, title: str, content: str, date: datetime.datetime, vote: float):
+def update_review(review_id: str, title: str, content: str, date: datetime.datetime, vote: float):
     result = db.review.update_one({"_id": ObjectId(review_id)}, {
         "$set": {
-            "user.username": username,
             "title": title,
             "content": content,
             "date": date,

@@ -25,8 +25,9 @@ def api_add_movie_to_user_list():
     favourite = data.get("favourite")
     favourite = favourite.lower() == 'true'
 
-    if not all([user_id, movie_id, title, poster, watched, favourite is not None]):
-        return jsonify({"error": "Missing required parameters"}), 400
+    print(data)
+    #if not all([user_id, movie_id, title, poster, watched, favourite is not None]):
+        #return jsonify({"error": "Missing required parameters"}), 400
 
     result = add_movie_to_user_list(user_id, movie_id, title, poster, watched, favourite)
 
@@ -46,8 +47,8 @@ def api_update_movie_in_user_list():
     favourite = data.get('favourite')
     favourite = favourite.lower() == 'true'
 
-    if not all([user_id, movie_id, watched, favourite is not None]):
-        return jsonify({"error": "Missing required parameters"}), 400
+    #if not all([user_id, movie_id, watched, favourite is not None]):
+        #return jsonify({"error": "Missing required parameters"}), 400
 
     result = update_movie_in_user_list(user_id, movie_id, watched, favourite)
 
@@ -82,7 +83,7 @@ def api_get_movies_user_list(user_id, watched):
     return jsonify(movies_list)
 
 
-@user_api.route('/add_review/<movide_id>', methods=['POST'])
+@user_api.route('/add_review/<movie_id>', methods=['POST'])
 def api_add_review(movie_id):
     data = request.get_json()
     username = data.get('username')
@@ -111,7 +112,6 @@ def api_add_review(movie_id):
 @user_api.route('/update_review/<review_id>', methods=['POST'])
 def api_update_review(review_id):
     data = request.get_json()
-    username = data.get('username')
     title = data.get('title')
     content = data.get('content')
     vote = data.get('vote')
@@ -121,7 +121,7 @@ def api_update_review(review_id):
         return jsonify({"error": "Missing required parameters"}), 400
 
     # Add the review to the movie document
-    result = update_review(review_id=review_id, username=username, title=title, content=content,
+    result = update_review(review_id=review_id,title=title, content=content,
                            vote=vote, date=date)
 
     if result:

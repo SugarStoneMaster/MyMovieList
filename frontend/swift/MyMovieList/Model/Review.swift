@@ -8,16 +8,16 @@
 import Foundation
 
 
-class Review
+class Review: Identifiable, Codable
 {
     var title: String
     var content: String
     var date: Date
-    var vote: Double
+    var vote: Int
     var user: User
     
     
-    init(title: String, content: String, date: Date, vote: Double, user: User) {
+    init(title: String, content: String, date: Date, vote: Int, user: User) {
         self.title = title
         self.content = content
         self.date = date
