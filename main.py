@@ -234,7 +234,7 @@ def main():
 
     update_coll_with_ids(users, usersIds)
 
-    reviews = generate_reviews(movies=movies, users=[{"_id": user["_id"], "username:": user["username"]}
+    reviews = generate_reviews(movies=movies, users=[{"_id": user["_id"], "username": user["username"]}
                                                      for user in users])
     reviewIds = reviewColl.insert_many(reviews)
 

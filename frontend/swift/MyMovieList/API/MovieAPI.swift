@@ -16,180 +16,16 @@ class MovieViewModel: ObservableObject
     
     @Published var movies: [Movie] = []
     @Published var reviews: [Review] = []
+    @Published var singleMovie: Movie? = nil
     @Published var successMessage: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
-    func addMovieToUserList(userId: String, movieId: String, title: String, poster: String, watched: Bool, favourite: Bool)
+   
+    //TODO da testare e richiamare ogni volta che la search bar cambia
+    func getMovies(text: String)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/add_movie_to_user_list") else {
-                    self.errorMessage = "Invalid URL"
-                    return
-                }
-
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [
-                    "user_id": userId,
-                    "movie_id": movieId,
-                    "title": title,
-                    "poster": poster,
-                    "watched": String(watched),
-                    "favourite": String(favourite)
-                ]
-
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-                } catch {
-                    self.errorMessage = "Failed to encode JSON"
-                    return
-                }
-
-                self.isLoading = true
-                self.successMessage = nil
-                self.errorMessage = nil
-
-                URLSession.shared.dataTask(with: request) { data, response, error in
-                    DispatchQueue.main.async {
-
-                        if let error = error {
-                            self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
-                            return
-                        }
-
-                        guard let data = data else {
-                            self.errorMessage = "No data received"
-                            return
-                        }
-
-                    
-                        if(self.errorMessage == nil)
-                        {
-                            var addedMovie = Movie()
-                            addedMovie._id = movieId
-                            addedMovie.title = title
-                            addedMovie.poster = poster
-                            addedMovie.watched = watched
-                            addedMovie.favourite = favourite
-                            self.movies.append(addedMovie)
-                        }
-                        
-                        self.isLoading = false
-                        
-                    }
-                }.resume()
-    }
-    
-    
-    func updateMovieInUserList(userId: String, movieId: String, watched: Bool, favourite: Bool)
-    {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/update_movie_in_user_list") else {
-                    self.errorMessage = "Invalid URL"
-                    return
-                }
-
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [
-                    "user_id": userId,
-                    "movie_id": movieId,
-                    "watched": String(watched),
-                    "favourite": String(favourite)
-                ]
-
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-                } catch {
-                    self.errorMessage = "Failed to encode JSON"
-                    return
-                }
-
-                self.isLoading = true
-                self.successMessage = nil
-                self.errorMessage = nil
-
-                URLSession.shared.dataTask(with: request) { data, response, error in
-                    DispatchQueue.main.async {
-
-                        if let error = error {
-                            self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
-                            return
-                        }
-
-                        guard let data = data else {
-                            self.errorMessage = "No data received"
-                            return
-                        }
-
-                    
-                        /*
-                        for movie in self.movies
-                        {
-                            if(movie._id == movieId)
-                            {
-                                movie.watched = watched
-                                movie.favourite = favourite
-                            }
-                        }*/
-                       
-                        
-                        self.isLoading = false
-                        
-                    }
-                }.resume()
-    }
-    
-    
-    func deleteMovieFromUserList(userId: String, movieId: String) {
-            guard let url = URL(string: "http://127.0.0.1:5000/api/user/delete_movie_from_user_list/\(userId)/\(movieId)") else {
-                self.errorMessage = "Invalid URL"
-                return
-            }
-
-            var request = URLRequest(url: url)
-            request.httpMethod = "DELETE"
-
-            self.isLoading = true
-            self.errorMessage = nil
-            self.successMessage = nil
-
-            URLSession.shared.dataTask(with: request) { data, response, error in
-                DispatchQueue.main.async {
-                    self.isLoading = false
-
-                    if let error = error {
-                        self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
-                        return
-                    }
-
-                    guard let data = data else {
-                        self.errorMessage = "No data received"
-                        return
-                    }
-
-                    do {
-                        let apiResponse = try JSONDecoder().decode(APIResponse.self, from: data)
-                        
-                        if let error = apiResponse.error {
-                            self.errorMessage = error
-                        } else if let message = apiResponse.message {
-                            self.successMessage = message
-                            // Optionally, remove the movie from the movies array
-                            self.movies.removeAll { $0._id == movieId }
-                        }
-                    } catch {
-                        self.errorMessage = "Error decoding JSON: \(error.localizedDescription)"
-                    }
-                }
-            }.resume()
-        }
-    
-    
-    
-    func getMoviesByReleaseYear(year: Int) {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/release_year/\(year)") else {
+        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/get_movies/\(text)") else {
                print("Invalid URL")
                return
            }
@@ -198,7 +34,10 @@ class MovieViewModel: ObservableObject
            URLSession.shared.dataTask(with: url) { (data, response, error) in
                if let data = data {
                    do {
-                       let movies = try JSONDecoder().decode([Movie].self, from: data)
+                       let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                       let moviesArray = json!["items"] as? [[String: Any]]
+                       let jsonData = try JSONSerialization.data(withJSONObject: moviesArray, options: [])
+                       let movies = try JSONDecoder().decode([Movie].self, from: jsonData)
                        DispatchQueue.main.async {
                            self.movies = movies
                        }
@@ -212,113 +51,153 @@ class MovieViewModel: ObservableObject
        }
     
     
-    func addReview(movieId: String, username: String, userId: String, title: String, content: String, vote: Int)
+    func getMoviesByGenres(genres: [String])
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/add_review/\(movieId)") else {
-                    self.errorMessage = "Invalid URL"
-                    return
-                }
-
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [
-                    "username": username,
-                    "user_id": userId,
-                    "title": title,
-                    "content": content,
-                    "vote": String(vote)
-                ]
-
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-                } catch {
-                    self.errorMessage = "Failed to encode JSON"
-                    return
-                }
-
-                self.isLoading = true
-                self.successMessage = nil
-                self.errorMessage = nil
-
-                URLSession.shared.dataTask(with: request) { data, response, error in
-                    DispatchQueue.main.async {
-
-                        if let error = error {
-                            self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
-                            return
-                        }
-
-                        guard let data = data else {
-                            self.errorMessage = "No data received"
-                            return
-                        }
-
-                    
-                        if(self.errorMessage == nil)
-                        {
-                            var addedReview = Review(title: title, content: content, date: Date(), vote: vote, user: User(_id: userId, username: username))
-                            self.reviews.append(addedReview)
-                        }
-                        
-                        self.isLoading = false
-                        
-                    }
-                }.resume()
-    }
+        var urlComponents = URLComponents(string: "http://127.0.0.1:5000/api/movies/get_movies_by_genres")!
+            urlComponents.queryItems = genres.map { URLQueryItem(name: "genres", value: $0) }
+            guard let url = urlComponents.url else {
+                print("Invalid URL")
+                return
+            }
+           
+           print(url)
+           URLSession.shared.dataTask(with: url) { (data, response, error) in
+               if let data = data {
+                   do {
+                       let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                       let moviesArray = json!["items"] as? [[String: Any]]
+                       let jsonData = try JSONSerialization.data(withJSONObject: moviesArray, options: [])
+                       let movies = try JSONDecoder().decode([Movie].self, from: jsonData)
+                       DispatchQueue.main.async {
+                           self.movies = movies
+                       }
+                   } catch {
+                       print("Error decoding JSON: \(error)")
+                   }
+               } else if let error = error {
+                   print("HTTP request failed: \(error)")
+               }
+           }.resume()
+       }
     
     
-    func updateReview(reviewId: String, title: String, content: String, vote: Int)
+    func getMoviesByReleaseYear(year: Int) 
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/update_review/\(reviewId)") else {
-                    self.errorMessage = "Invalid URL"
-                    return
-                }
-
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [
-                    "title": title,
-                    "content": content,
-                    "vote": String(vote)
-                ]
-
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-                } catch {
-                    self.errorMessage = "Failed to encode JSON"
-                    return
-                }
-
-                self.isLoading = true
-                self.successMessage = nil
-                self.errorMessage = nil
-
-                URLSession.shared.dataTask(with: request) { data, response, error in
-                    DispatchQueue.main.async {
-
-                        if let error = error {
-                            self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
-                            return
-                        }
-
-                        guard let data = data else {
-                            self.errorMessage = "No data received"
-                            return
-                        }
-
-                    
-                        if(self.errorMessage == nil)
-                        {
-                            
-                        }
-                        
-                        self.isLoading = false
-                        
-                    }
-                }.resume()
-    }
+        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/release_year/\(year)") else {
+               print("Invalid URL")
+               return
+           }
+           
+           print(url)
+           URLSession.shared.dataTask(with: url) { (data, response, error) in
+               if let data = data {
+                   do {
+                       let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                       let moviesArray = json!["items"] as? [[String: Any]]
+                       let jsonData = try JSONSerialization.data(withJSONObject: moviesArray, options: [])
+                       let movies = try JSONDecoder().decode([Movie].self, from: jsonData)
+                       DispatchQueue.main.async {
+                           self.movies = movies
+                       }
+                   } catch {
+                       print("Error decoding JSON: \(error)")
+                   }
+               } else if let error = error {
+                   print("HTTP request failed: \(error)")
+               }
+           }.resume()
+       }
+    
+    
+    func sortMovies(field: String, order: Int)
+    {
+        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/sort/\(field)/\(order)") else {
+               print("Invalid URL")
+               return
+           }
+           
+           print(url)
+           URLSession.shared.dataTask(with: url) { (data, response, error) in
+               if let data = data {
+                   do {
+                       let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                       let moviesArray = json!["items"] as? [[String: Any]]
+                       let jsonData = try JSONSerialization.data(withJSONObject: moviesArray, options: [])
+                       let movies = try JSONDecoder().decode([Movie].self, from: jsonData)
+                       DispatchQueue.main.async {
+                           self.movies = movies
+                       }
+                   } catch {
+                       print("Error decoding JSON: \(error)")
+                   }
+               } else if let error = error {
+                   print("HTTP request failed: \(error)")
+               }
+           }.resume()
+       }
+    
+    
+    func getMovieReviews(movieId: String)
+    {
+        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/reviews/\(movieId)") else {
+               print("Invalid URL")
+               return
+           }
+           
+           print(url)
+           URLSession.shared.dataTask(with: url) { (data, response, error) in
+               if let data = data {
+                   do {
+                       // Parse JSON data
+                       let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                       guard let reviewsArray = json?["items"] as? [[String: Any]] else {
+                           print("Failed to parse reviews")
+                           return
+                       }
+                       
+                       // Encode the array of dictionaries back to JSON data
+                       let jsonData = try JSONSerialization.data(withJSONObject: reviewsArray, options: [])
+                       
+                       // Decode the JSON data to an array of Review objects
+                       let reviews = try JSONDecoder().decode([Review].self, from: jsonData)
+                       
+                       DispatchQueue.main.async {
+                           self.reviews = reviews // Make sure `self.reviews` is defined and accessible
+                       }
+                   } catch {
+                       print("Error decoding JSON: \(error)")
+                   }
+               } else if let error = error {
+                   print("HTTP request failed: \(error)")
+               }
+           }.resume()
+       }
+    
+    
+    func getMovie(movieId: String)
+    {
+        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/get_movie/\(movieId)") else {
+               print("Invalid URL")
+               return
+           }
+           
+           print(url)
+           URLSession.shared.dataTask(with: url) { (data, response, error) in
+               if let data = data {
+                   do {
+                       let singleMovie = try JSONDecoder().decode(Movie.self, from: data)
+                       DispatchQueue.main.async {
+                           self.singleMovie = singleMovie
+                       }
+                   } catch {
+                       print("Error decoding JSON: \(error)")
+                   }
+               } else if let error = error {
+                   print("HTTP request failed: \(error)")
+               }
+           }.resume()
+       }
+    
     
     
     

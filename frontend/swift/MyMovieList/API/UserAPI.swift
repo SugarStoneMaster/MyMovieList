@@ -257,7 +257,7 @@ class UserViewModel: ObservableObject
                     
                         if(self.errorMessage == nil)
                         {
-                            var addedReview = Review(title: title, content: content, date: Date(), vote: vote, user: User(_id: userId, username: username))
+                            var addedReview = Review(title: title, content: content,  vote: vote, user: User(_id: userId, username: username))
                             self.reviews.append(addedReview)
                         }
                         

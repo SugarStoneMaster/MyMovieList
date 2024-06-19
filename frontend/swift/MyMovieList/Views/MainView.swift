@@ -11,9 +11,11 @@ struct MainView: View
 {
     @StateObject private var viewModel = UserViewModel()
     @StateObject private var MviewModel = MovieViewModel()
+    @StateObject private var TviewModel = TroupeViewModel()
+
 
     
-    @State private var userId: String = "66698002ac0322a05e462d2a"
+    @State private var userId: String = "6672cb48bdacc9431ece7870"
     @State private var movieId: String = "66698002ac0322a05e461c7a"
     @State private var title: String = "American Beauty"
     @State private var poster: String = "https://m.media-amazon.com/images/M/MV5BNTBmZWJkNjctNDhiNC00MGE2LWEwOTctZTk5OGVhMWMyNmVhXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_SX300.jpg"
@@ -114,7 +116,7 @@ struct MainView: View
                     }
                     
                     Button(action: {
-                        MviewModel.getMoviesByReleaseYear(year: 2000)
+                        MviewModel.getMoviesByReleaseYear(year: 2001)
                             }) {
                                 Text("Movies in year")
                                     .padding()
@@ -122,6 +124,85 @@ struct MainView: View
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
                             }
+                    Button(action: {
+                        MviewModel.sortMovies(field: "popularity", order: -1)
+                            }) {
+                                Text("Movies in order")
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                    Button(action: {
+                        MviewModel.getMoviesByGenres(genres: ["Family", "Animation"])
+                            }) {
+                                Text("Movies by genres")
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                    Button(action: {
+                        MviewModel.getMovieReviews(movieId: "6672cb48bdacc9431ece67c9")
+                            }) {
+                                Text("Movies reviews")
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                    List(MviewModel.movies)
+                    { movie in
+                        VStack(alignment: .leading)
+                        {
+                            Text(movie.title ?? "No Title").font(.headline)
+                            Text("Watched: \(movie.watched == true ? "Yes" : "No")")
+                        }
+                    }
+                    
+                    List(MviewModel.reviews)
+                    { review in
+                        VStack(alignment: .leading)
+                        {
+                            Text(review.title ?? "No Title").font(.headline)
+                        }
+                    }
+                    
+                    Button(action: {
+                        MviewModel.getMovie(movieId: "6672cb48bdacc9431ece67c9")
+                            }) {
+                                Text("Get movie")
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                    Button(action: {
+                        TviewModel.getTroupe(troupeId: "6672cb48bdacc9431ece6827")
+                            }) {
+                                Text("Get troupe")
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                    VStack
+                    {
+                        if(MviewModel.singleMovie != nil)
+                        {
+                            Text(MviewModel.singleMovie!.title!)
+                            Text(MviewModel.singleMovie!.overview!)
+                        }
+                    }
+                    
+                    VStack
+                    {
+                        if(TviewModel.singleTroupe != nil)
+                        {
+                            Text(TviewModel.singleTroupe!.full_name!)
+                            Text(TviewModel.singleTroupe!.type!)
+                        }
+                    }
                     
                 }//VStack end
                 

@@ -10,6 +10,7 @@ from datetime import datetime
 
 from api.movies import movies_api
 from api.user import user_api
+from api.troupe import troupe_api
 
 
 # https://stackoverflow.com/questions/44146087/pass-user-built-json-encoder-into-flasks-jsonify
@@ -39,6 +40,7 @@ def create_app():
     CORS(app)
     app.register_blueprint(movies_api)
     app.register_blueprint(user_api)
+    app.register_blueprint(troupe_api)
     app.json = MongoJsonProvider(app)
 
     @app.route('/', defaults={'path': ''})

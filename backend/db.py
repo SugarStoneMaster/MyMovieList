@@ -98,14 +98,14 @@ def paginate_query(collection, query, offset: int, limit: int):
 
 # MOVIES QUERIES -- START
 
-def get_movies(offset: int, movies_per_page: int, field: Optional[str] = None, projection: Optional[dict] = None) \
+def get_movies(offset: int, items_per_page: int, text: Optional[str] = None, projection: Optional[dict] = None) \
         -> Union[Tuple[List[dict], int], Exception]:
     """
         Get movies based on title, directors, and actors.
     
         :param offset: The number of documents to skip.
-        :param movies_per_page: The maximum number of movies to return per page.
-        :param field: The field of the movie (title, actors, directors).
+        :param items_per_page: The maximum number of movies to return per page.
+        :param text: The field of the movie (title, actors, directors).
         :param projection: The fields to include or exclude in the result.
         :return: A tuple containing the list of movies for the given page and the total count of movies that match
             the query criteria or an Exception if an error occurs.
@@ -114,11 +114,11 @@ def get_movies(offset: int, movies_per_page: int, field: Optional[str] = None, p
     try:
         query = {}
 
-        if field:
-            field_list = field.split(",")
-            query["title"] = field
-            query["directors"] = {"$in": field_list}
-            query["cast"] = {"$in": field_list}
+        if text:
+            text_list = text.split(",")
+            query["title"] = text
+            query["directors"] = {"$in": text_list}
+            query["cast"] = {"$in": text_list}
 
         # Default projection if not provided
         default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
@@ -128,21 +128,21 @@ def get_movies(offset: int, movies_per_page: int, field: Optional[str] = None, p
         movie_query = db.movie.find(query, projection)
 
         # Paginate the query
-        movies, total_movies = paginate_query(db.movie, movie_query, offset, movies_per_page)
+        movies, total_movies = paginate_query(db.movie, movie_query, offset, items_per_page)
 
         return movies, total_movies
     except Exception as e:
         return e
 
 
-def get_movies_by_genres(offset: int, movies_per_page: int, genres: Union[List[str], str],
+def get_movies_by_genres(offset: int, items_per_page: int, genres: Union[List[str], str] = None,
                          projection: Optional[dict] = None) -> Union[Tuple[List[dict], int], Exception]:
     """
         Get movies based on genres with pagination and projection.
     
         :param projection: The fields to include or exclude in the result.
         :param offset: The number of documents to skip.
-        :param movies_per_page: The maximum number of movies to return per page.
+        :param items_per_page: The maximum number of movies to return per page.
         :param genres: List of genres or a single genre.
         :return: A tuple containing the list of movies for the given page and the total count of movies that match the criteria,
                 or an Exception if an error occurs.
@@ -158,19 +158,19 @@ def get_movies_by_genres(offset: int, movies_per_page: int, genres: Union[List[s
         movie_query = db.movie.find(query, projection)
 
         # Paginate the query
-        return paginate_query(db.movie, movie_query, offset, movies_per_page)
+        return paginate_query(db.movie, movie_query, offset, items_per_page)
     except Exception as e:
         return e
 
 
-def get_movies_by_release_year(offset: int, movies_per_page: int, release_year: int,
+def get_movies_by_release_year(offset: int, items_per_page: int, release_year: int,
                                projection: Optional[dict] = None) -> Union[Tuple[List[dict], int], Exception]:
     """
         Get movies released in a specific year with pagination and projection.
     
         :param projection: The fields to include or exclude in the result.
         :param offset: The number of documents to skip.
-        :param movies_per_page: The maximum number of movies to return per page.
+        :param items_per_page: The maximum number of movies to return per page.
         :param release_year: The release year.
         :return: A tuple containing the list of movies for the given page and the total count of movies that match
             the criteria or an Exception if an error occurs.
@@ -186,12 +186,12 @@ def get_movies_by_release_year(offset: int, movies_per_page: int, release_year: 
         movie_query = db.movie.find(query, projection)
 
         # Paginate the query
-        return paginate_query(db.movie, movie_query, offset, movies_per_page)
+        return paginate_query(db.movie, movie_query, offset, items_per_page)
     except Exception as e:
         return e
 
 
-def sort_movies(offset: int, movies_per_page: int, field: str, order: int = -1,
+def sort_movies(offset: int, items_per_page: int, field: str, order: str = "-1",
                 projection: Optional[dict] = None) -> Union[Tuple[List[dict], int], Exception]:
     """
         Get movies sorted in descending order by rating.
@@ -200,7 +200,7 @@ def sort_movies(offset: int, movies_per_page: int, field: str, order: int = -1,
         :param field: The field to sort by.
         :param projection: The fields to include or exclude in the result.
         :param offset: The number of documents to skip.
-        :param movies_per_page: The maximum number of movies to return per page.
+        :param items_per_page: The maximum number of movies to return per page.
         :return: A tuple containing the list of movies for the given page and the total count of movies that match
             the criteria or an Exception if an error occurs.
     """
@@ -210,20 +210,20 @@ def sort_movies(offset: int, movies_per_page: int, field: str, order: int = -1,
         projection = projection or default_projection
 
         # Construct the MongoDB query with projection
-        movie_query = db.movie.find({}, projection).sort({field: order})
+        movie_query = db.movie.find({}, projection).sort({field: int(order)})
 
         # Paginate the query
-        return paginate_query(db.movie, movie_query, offset, movies_per_page)
+        return paginate_query(db.movie, movie_query, offset, items_per_page)
     except Exception as e:
         return e
 
 
-def get_movie_reviews(offset: int, reviews_per_page: int, movie_id: str) -> Union[Tuple[List[dict], int], Exception]:
+def get_movie_reviews(offset: int, items_per_page: int = None, movie_id: str = None) -> Union[Tuple[List[dict], int], Exception]:
     """
         Get a movie's reviews.
     
         :param offset: The number of documents to skip.
-        :param movies_per_page: The maximum number of movies to return per page.
+        :param items_per_page: The maximum number of movies to return per page.
         :param movie_id: The movie id.
         :return: A tuple containing the list of reviews for a given movie and the total count of reviews 
             or an Exception if an error occurs.
@@ -233,7 +233,7 @@ def get_movie_reviews(offset: int, reviews_per_page: int, movie_id: str) -> Unio
         reviews_query = db.review.find({"movie_id": ObjectId(movie_id)})
 
         # Paginate the query
-        return paginate_query(db.review, reviews_query, offset, reviews_per_page)
+        return paginate_query(db.review, reviews_query, offset, items_per_page)
     except Exception as e:
         return e
 

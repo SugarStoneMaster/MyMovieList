@@ -36,6 +36,34 @@ class Movie: Identifiable, Codable
     var watched: Bool?
     var favourite: Bool?
     
+    enum CodingKeys: String, CodingKey {
+            case _id
+            case title
+            case poster
+            case overview
+            case tagline
+            case release_date
+            case release_year
+            case genres
+            case production_companies
+            case production_countries
+            case budget
+            case revenue
+            case runtime
+            case popularity
+            case status
+            case vote_count
+            case vote_average
+            case actors
+            case directors
+            case spoken_languages
+            case watched_count
+            case added_count
+            case reviews
+            case watched
+            case favourite
+        }
+    
     
     init(
             _id: String? = nil,
@@ -94,5 +122,40 @@ class Movie: Identifiable, Codable
     init() {
         
     }
+    
+    required init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            _id = try? container.decode(String.self, forKey: ._id)
+            title = try? container.decode(String.self, forKey: .title)
+            poster = try? container.decode(String.self, forKey: .poster)
+            overview = try? container.decode(String.self, forKey: .overview)
+            tagline = try? container.decode(String.self, forKey: .tagline)
+            release_year = try? container.decode(Int.self, forKey: .release_year)
+            genres = try? container.decode([String].self, forKey: .genres)
+            production_companies = try? container.decode([String].self, forKey: .production_companies)
+            production_countries = try? container.decode([String].self, forKey: .production_countries)
+            budget = try? container.decode(Double.self, forKey: .budget)
+            revenue = try? container.decode(Double.self, forKey: .revenue)
+            runtime = try? container.decode(Int.self, forKey: .runtime)
+            popularity = try? container.decode(Double.self, forKey: .popularity)
+            status = try? container.decode(String.self, forKey: .status)
+            vote_count = try? container.decode(Int.self, forKey: .vote_count)
+            vote_average = try? container.decode(Double.self, forKey: .vote_average)
+            actors = try? container.decode([Troupe].self, forKey: .actors)
+            directors = try? container.decode([Troupe].self, forKey: .directors)
+            spoken_languages = try? container.decode([String].self, forKey: .spoken_languages)
+            watched_count = try? container.decode(Int.self, forKey: .watched_count)
+            added_count = try? container.decode(Int.self, forKey: .added_count)
+            reviews = try? container.decode([Review].self, forKey: .reviews)
+            watched = try? container.decode(Bool.self, forKey: .watched)
+            favourite = try? container.decode(Bool.self, forKey: .favourite)
+            
+            let releaseDateString = try? container.decode(String.self, forKey: .release_date)
+            if let releaseDateString = releaseDateString {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                release_date = dateFormatter.date(from: releaseDateString)
+            }
+        }
     
 }
