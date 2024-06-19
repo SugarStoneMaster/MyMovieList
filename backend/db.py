@@ -98,18 +98,14 @@ def paginate_query(collection, query, offset: int, limit: int):
 
 # MOVIES QUERIES -- START
 
-def get_movies(offset: int, movies_per_page: int, title: Optional[str] = None,
-               directors: Optional[Union[str, List[str]]] = None,
-               actors: Optional[Union[str, List[str]]] = None, projection: Optional[dict] = None) \
+def get_movies(offset: int, movies_per_page: int, field: Optional[str] = None, projection: Optional[dict] = None) \
         -> Union[Tuple[List[dict], int], Exception]:
     """
         Get movies based on title, directors, and actors.
     
         :param offset: The number of documents to skip.
         :param movies_per_page: The maximum number of movies to return per page.
-        :param title: The title of the movie.
-        :param directors: Directors of the movie.
-        :param actors: Actors starring in the movie.
+        :param field: The field of the movie (title, actors, directors).
         :param projection: The fields to include or exclude in the result.
         :return: A tuple containing the list of movies for the given page and the total count of movies that match
             the query criteria or an Exception if an error occurs.
@@ -118,18 +114,11 @@ def get_movies(offset: int, movies_per_page: int, title: Optional[str] = None,
     try:
         query = {}
 
-        if title:
-            query["title"] = title
-
-        if directors:
-            if isinstance(directors, str):
-                directors = [directors]
-            query["directors"] = {"$in": directors}
-
-        if actors:
-            if isinstance(actors, str):
-                actors = [actors]
-            query["cast"] = {"$in": actors}
+        if field:
+            field_list = field.split(",")
+            query["title"] = field
+            query["directors"] = {"$in": field_list}
+            query["cast"] = {"$in": field_list}
 
         # Default projection if not provided
         default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
