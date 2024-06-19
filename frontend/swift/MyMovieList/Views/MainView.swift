@@ -10,6 +10,8 @@ import SwiftUI
 struct MainView: View 
 {
     @StateObject private var viewModel = UserViewModel()
+    @StateObject private var MviewModel = MovieViewModel()
+
     
     @State private var userId: String = "66698002ac0322a05e462d2a"
     @State private var movieId: String = "66698002ac0322a05e461c7a"
@@ -47,7 +49,7 @@ struct MainView: View
                     Button(action: {
                                 viewModel.addMovieToUserList(userId: userId, movieId: movieId, title: title, poster: poster, watched: watched, favourite: favourite)
                             }) {
-                                Text("Add Movie")
+                                Text("Add Movie to userlist")
                                     .padding()
                                     .background(Color.blue)
                                     .foregroundColor(.white)
@@ -56,7 +58,7 @@ struct MainView: View
                     Button(action: {
                                 viewModel.updateMovieInUserList(userId: userId, movieId: movieId, watched: watched, favourite: favourite)
                             }) {
-                                Text("Update Movie")
+                                Text("Update Movie in userlist")
                                     .padding()
                                     .background(Color.blue)
                                     .foregroundColor(.white)
@@ -65,7 +67,7 @@ struct MainView: View
                     Button(action: {
                                 viewModel.deleteMovieFromUserList(userId: userId, movieId: movieId)
                             }) {
-                                Text("Delete Movie")
+                                Text("Delete Movie from user list")
                                     .padding()
                                     .background(Color.blue)
                                     .foregroundColor(.white)
@@ -74,7 +76,7 @@ struct MainView: View
                     Button(action: {
                                 viewModel.addReview(movieId: movieId, username: "nuova", userId: userId, title: "nuovisima", content: "ciao", vote: 10)
                             }) {
-                                Text("Add Review")
+                                Text("Add Review to movie")
                                     .padding()
                                     .background(Color.blue)
                                     .foregroundColor(.white)
@@ -110,6 +112,16 @@ struct MainView: View
 
                         }
                     }
+                    
+                    Button(action: {
+                        MviewModel.getMoviesByReleaseYear(year: 2000)
+                            }) {
+                                Text("Movies in year")
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
                     
                 }//VStack end
                 

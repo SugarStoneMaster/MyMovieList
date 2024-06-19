@@ -28,7 +28,7 @@ def paginate_movies(get_movies_func, **kwargs):
     response = {
         "movies": movies,
         "page": page,
-        "entries_per_page": DEFAULT_MOVIES_PER_PAGE,
+        "entries_per_page": DEFAULT_ITEMS_PER_PAGE,
         "total_results": total_results
     }
 
