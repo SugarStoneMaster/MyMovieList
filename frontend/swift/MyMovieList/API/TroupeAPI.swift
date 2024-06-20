@@ -10,9 +10,7 @@ import Foundation
 
 class TroupeViewModel: ObservableObject
 {
-    init() {
-        baseUrl?.path = "troupe/"
-    }
+    var urlSub: String = "troupe/"
     
     @Published var singleTroupe: Troupe? = nil
     @Published var successMessage: String?
@@ -23,7 +21,7 @@ class TroupeViewModel: ObservableObject
     //TODO da testare e richiamare ogni volta che la search bar cambia
     func getTroupe(troupeId: String)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/troupe/get_troupe/\(troupeId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "get_troupe/\(troupeId)") else {
             print("Invalid URL")
             return
         }

@@ -247,6 +247,23 @@ def get_movie(movie_id: str):
 
 # USER QUERIES -- START
 
+def apple_sign_in(email, username):
+    user = db.user.find_one({"email": email})
+
+    if user:
+        return user
+    else:
+        new_user = {
+            "username": username,
+            "email": email,
+            "password": "defaultpassword",  # You might want to generate a secure password or handle this appropriately
+            "movies_list": []
+        }
+        result = db.user.insert_one(new_user)
+        new_user["_id"] = result.inserted_id
+        print(new_user)
+        return new_user
+
 def add_movie_to_user_list(user_id: str, movie_id: str, title: str, poster: str, watched: bool, favourite: bool):
     """
        Add a movie to the user list.

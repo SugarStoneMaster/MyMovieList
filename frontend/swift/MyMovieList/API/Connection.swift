@@ -6,10 +6,17 @@
 //
 
 import Foundation
+import Network
 
 struct APIResponse: Codable {
     let message: String?
     let error: String?
 }
 
-var baseUrl = URLComponents(string: "http://127.0.0.1:5000/api/" )
+
+
+
+var baseUrl: String = "http://192.168.1.237:5001/api/"
+
+
+

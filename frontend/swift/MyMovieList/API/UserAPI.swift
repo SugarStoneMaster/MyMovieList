@@ -10,19 +10,59 @@ import Foundation
 
 class UserViewModel: ObservableObject
 {
-    init() {
-        baseUrl?.path = "user/"
-    }
+    var urlSub: String = "user/"
+    
+
     
     @Published var movies: [Movie] = []
     @Published var reviews: [Review] = []
+    @Published var user: User? = nil
     @Published var successMessage: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
+    
+    func appleSignIn(email: String, username: String)
+    {
+        guard let url = URL(string: baseUrl + urlSub + "apple_sign_in") else {
+            print("Invalid URL")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        print(email)
+        print(username)
+        let body: [String: Any] = ["email": email, "username": username]
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+        } catch {
+            print("Failed to encode JSON")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: url) { (data, response, error) in
+            if let data = data {
+                do {
+                    let user = try JSONDecoder().decode(User.self, from: data)
+                    DispatchQueue.main.async {
+                        self.user = user
+                    }
+                } catch {
+                    print("Error decoding JSON: \(error)")
+                }
+            } else if let error = error {
+                print("HTTP request failed: \(error)")
+            }
+        }.resume()
+    }
+    
+    
     func addMovieToUserList(userId: String, movieId: String, title: String, poster: String, watched: Bool, favourite: Bool)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/add_movie_to_user_list") else {
+        guard let url = URL(string: baseUrl + urlSub + "add_movie_to_user_list") else {
                     self.errorMessage = "Invalid URL"
                     return
                 }
@@ -84,7 +124,7 @@ class UserViewModel: ObservableObject
     
     func updateMovieInUserList(userId: String, movieId: String, watched: Bool, favourite: Bool)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/update_movie_in_user_list") else {
+        guard let url = URL(string: baseUrl + urlSub + "update_movie_in_user_list") else {
                     self.errorMessage = "Invalid URL"
                     return
                 }
@@ -142,8 +182,9 @@ class UserViewModel: ObservableObject
     }
     
     
-    func deleteMovieFromUserList(userId: String, movieId: String) {
-            guard let url = URL(string: "http://127.0.0.1:5000/api/user/delete_movie_from_user_list/\(userId)/\(movieId)") else {
+    func deleteMovieFromUserList(userId: String, movieId: String) 
+    {
+            guard let url = URL(string: baseUrl + urlSub + "delete_movie_from_user_list/\(userId)/\(movieId)") else {
                 self.errorMessage = "Invalid URL"
                 return
             }
@@ -188,8 +229,9 @@ class UserViewModel: ObservableObject
     
     
     
-    func getMoviesUserList(userId: String, watched: Bool) {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/get_movies_user_list/\(userId)/\(watched)") else {
+    func getMoviesUserList(userId: String, watched: Bool) 
+    {
+        guard let url = URL(string: baseUrl + urlSub + "get_movies_user_list/\(userId)/\(watched)") else {
                print("Invalid URL")
                return
            }
@@ -214,7 +256,7 @@ class UserViewModel: ObservableObject
     
     func addReview(movieId: String, username: String, userId: String, title: String, content: String, vote: Int)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/add_review/\(movieId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "add_review/\(movieId)") else {
                     self.errorMessage = "Invalid URL"
                     return
                 }
@@ -270,7 +312,7 @@ class UserViewModel: ObservableObject
     
     func updateReview(reviewId: String, title: String, content: String, vote: Int)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/user/update_review/\(reviewId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "update_review/\(reviewId)") else {
                     self.errorMessage = "Invalid URL"
                     return
                 }

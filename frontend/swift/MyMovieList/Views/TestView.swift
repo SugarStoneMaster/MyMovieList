@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MainView: View 
+struct TestView: View
 {
     @StateObject private var viewModel = UserViewModel()
     @StateObject private var MviewModel = MovieViewModel()
@@ -48,7 +48,7 @@ struct MainView: View
                             }
                         }
                      }
-                    Button(action: {
+                    /*Button(action: {
                                 viewModel.addMovieToUserList(userId: userId, movieId: movieId, title: title, poster: poster, watched: watched, favourite: favourite)
                             }) {
                                 Text("Add Movie to userlist")
@@ -92,7 +92,7 @@ struct MainView: View
                                     .background(Color.blue)
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
-                            }
+                            }*/
                     
                     Button(action: {
                         watched.toggle()
@@ -104,7 +104,7 @@ struct MainView: View
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
                             }
-
+/*
                     List(viewModel.reviews)
                     { review in
                         VStack(alignment: .leading)
@@ -185,7 +185,7 @@ struct MainView: View
                                     .background(Color.blue)
                                     .foregroundColor(.white)
                                     .cornerRadius(8)
-                            }
+                            }*/
                     VStack
                     {
                         if(MviewModel.singleMovie != nil)
@@ -213,5 +213,5 @@ struct MainView: View
 }
 
 #Preview {
-    MainView()
+    TestView()
 }

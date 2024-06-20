@@ -3,7 +3,7 @@ from datetime import datetime
 from http.client import responses
 
 from db import get_movie, add_movie_to_user_list, update_movie_in_user_list, delete_movie_from_user_list, \
-    get_movies_user_list, add_review, update_review
+    get_movies_user_list, add_review, update_review, apple_sign_in
 from flask import Blueprint, request, jsonify
 from flask_cors import CORS
 
@@ -11,6 +11,13 @@ user_api = Blueprint(
     'user_api', 'user_api', url_prefix='/api/user')
 
 CORS(user_api)
+
+@user_api.route("/apple_sign_in", methods=['POST'])
+def api_apple_sign_in():
+    data = request.get_json()
+    email = data['email']
+    username = data['username']
+    return apple_sign_in(email, username)
 
 
 @user_api.route('/add_movie_to_user_list', methods=['POST'])

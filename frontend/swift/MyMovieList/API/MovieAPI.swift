@@ -10,9 +10,7 @@ import Foundation
 
 class MovieViewModel: ObservableObject
 {
-    init() {
-        baseUrl?.path = "movies/"
-    }
+    var urlSub: String = "movies/"
     
     @Published var movies: [Movie] = []
     @Published var reviews: [Review] = []
@@ -25,7 +23,7 @@ class MovieViewModel: ObservableObject
     //TODO da testare e richiamare ogni volta che la search bar cambia
     func getMovies(text: String)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/get_movies/\(text)") else {
+        guard let url = URL(string: baseUrl + urlSub + "get_movies/\(text)") else {
                print("Invalid URL")
                return
            }
@@ -53,7 +51,7 @@ class MovieViewModel: ObservableObject
     
     func getMoviesByGenres(genres: [String])
     {
-        var urlComponents = URLComponents(string: "http://127.0.0.1:5000/api/movies/get_movies_by_genres")!
+        var urlComponents = URLComponents(string: baseUrl + urlSub + "get_movies_by_genres")!
             urlComponents.queryItems = genres.map { URLQueryItem(name: "genres", value: $0) }
             guard let url = urlComponents.url else {
                 print("Invalid URL")
@@ -83,7 +81,7 @@ class MovieViewModel: ObservableObject
     
     func getMoviesByReleaseYear(year: Int) 
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/release_year/\(year)") else {
+        guard let url = URL(string: baseUrl + urlSub + "release_year/\(year)") else {
                print("Invalid URL")
                return
            }
@@ -111,7 +109,7 @@ class MovieViewModel: ObservableObject
     
     func sortMovies(field: String, order: Int)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/sort/\(field)/\(order)") else {
+        guard let url = URL(string: baseUrl + urlSub + "sort/\(field)/\(order)") else {
                print("Invalid URL")
                return
            }
@@ -139,7 +137,7 @@ class MovieViewModel: ObservableObject
     
     func getMovieReviews(movieId: String)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/reviews/\(movieId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "reviews/\(movieId)") else {
                print("Invalid URL")
                return
            }
@@ -176,7 +174,7 @@ class MovieViewModel: ObservableObject
     
     func getMovie(movieId: String)
     {
-        guard let url = URL(string: "http://127.0.0.1:5000/api/movies/get_movie/\(movieId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "get_movie/\(movieId)") else {
                print("Invalid URL")
                return
            }
