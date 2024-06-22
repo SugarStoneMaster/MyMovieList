@@ -37,13 +37,7 @@ struct ContentView: View {
                 Text("Profile")
             }
             
-            TestView().tabItem
-            {
-                Image(systemName: "person.crop.circle")
-                    .accessibilityAddTraits([.isButton])
-                    .accessibilityLabel("Profile")
-                Text("Profile")
-            }
+            
             
         }//end tab view
         

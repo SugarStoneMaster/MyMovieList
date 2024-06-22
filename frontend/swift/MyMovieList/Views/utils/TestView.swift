@@ -96,7 +96,7 @@ struct TestView: View
                     
                     Button(action: {
                         watched.toggle()
-                        viewModel.getMoviesUserList(userId: userId, watched: watched)
+                        viewModel.getMoviesUserList(userId: userId, watched: watched, favourite: false)
                             }) {
                                 Text("Watched")
                                     .padding()
@@ -207,7 +207,7 @@ struct TestView: View
                 }//VStack end
                 
                         .navigationTitle("Movies")
-                        .onAppear{viewModel.getMoviesUserList(userId: userId, watched: watched)}
+                        .onAppear{viewModel.getMoviesUserList(userId: userId, watched: watched, favourite: false)}
                     }
         }
 }

@@ -12,12 +12,16 @@ def generate_user_movie_list(movies, num_movies: int = 5):
         watched = random.choice([True, False])
         if watched:  # Simulating user watching behavior
             user_movie["watched_count"] = user_movie.get("watched_count", 0) + 1
+            favourite = random.choice([True, False])
+        if not watched:
+            favourite = False
 
         movie = {
             "_id": user_movie["_id"],
             "title": user_movie["title"],
             "poster": user_movie["poster"],
-            "watched": watched
+            "watched": watched,
+            "favourite": favourite
         }
         movie_list.append(movie)
     return movie_list

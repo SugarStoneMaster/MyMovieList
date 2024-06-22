@@ -229,9 +229,9 @@ class UserViewModel: ObservableObject
     
     
     
-    func getMoviesUserList(userId: String, watched: Bool) 
+    func getMoviesUserList(userId: String, watched: Bool, favourite: Bool)
     {
-        guard let url = URL(string: baseUrl + urlSub + "get_movies_user_list/\(userId)/\(watched)") else {
+        guard let url = URL(string: baseUrl + urlSub + "get_movies_user_list/\(userId)/\(watched)/\(favourite)") else {
                print("Invalid URL")
                return
            }

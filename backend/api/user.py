@@ -81,12 +81,11 @@ def api_delete_movie_from_user_list(user_id: str, movie_id: str):
         return json.dumps({"Error deleting movie": responses[500]}), 500  # 500 Internal Server Error
 
 
-@user_api.route('/get_movies_user_list/<user_id>/<watched>', methods=['GET'])
-def api_get_movies_user_list(user_id, watched):
-    # Convert the 'watched' parameter from string to boolean
-    watched_bool = watched.lower() == 'true'
-    # Retrieve the movies list based on the watched status
-    movies_list = get_movies_user_list(user_id, watched_bool)
+@user_api.route('/get_movies_user_list/<user_id>/<watched>/<favourite>', methods=['GET'])
+def api_get_movies_user_list(user_id, watched, favourite):
+    watched = watched.lower() == 'true'
+    favourite = favourite.lower() == 'true'
+    movies_list = get_movies_user_list(user_id, watched, favourite)
     return jsonify(movies_list)
 
 

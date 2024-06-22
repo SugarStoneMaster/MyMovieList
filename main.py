@@ -21,6 +21,7 @@ def get_movies_and_troupe(data) -> tuple[list, list]:
             break
 
         movie["title"] = movieRow["title"]
+        movie["tagline"] = movieRow["tagline"]
         movie["vote_average"] = round(movieRow["vote_average"], 2)
         movie["vote_count"] = movieRow["vote_count"]
         movie["release_date"] = datetime.strptime(movieRow["release_date"], "%Y-%m-%d").isoformat()

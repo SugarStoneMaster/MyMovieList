@@ -158,4 +158,93 @@ class Movie: Identifiable, Codable
             }
         }
     
+    func runtimeHour() -> String
+    {
+        let hours = runtime! / 60
+        let remainingMinutes = runtime! % 60
+        
+        let hoursString = "\(hours)h"
+        let minutesString = "\(remainingMinutes)m"
+
+        return "\(hoursString) \(minutesString)"
+    }
+    
+    func getGenres() -> String
+    {
+        var string: String = ""
+        var i: Int = 0
+        if(genres!.count == 1)
+        {
+            return genres![0]
+        }
+        
+        for genre in genres!
+        {
+            if(i < genres!.count - 1)
+            {
+                string = "\(string)\(genre), "
+            }
+            else
+            {
+                string = "\(string)\(genre)"
+            }
+            
+            i += 1
+        }
+        
+        return string
+    }
+    
+    func getCompanies() -> String
+    {
+        var string: String = ""
+        var i: Int = 0
+        if(production_companies!.count == 1)
+        {
+            return production_companies![0]
+        }
+        
+        for production_company in production_companies!
+        {
+            if(i < production_companies!.count - 1)
+            {
+                string = "\(string)\(production_company), "
+            }
+            else
+            {
+                string = "\(string)\(production_company)"
+            }
+            
+            i += 1
+        }
+        
+        return string
+    }
+    
+    func getLanguages() -> String
+    {
+        var string: String = ""
+        var i: Int = 0
+        if(spoken_languages!.count == 1)
+        {
+            return spoken_languages![0]
+        }
+        
+        for spoken_language in spoken_languages!
+        {
+            if(i < spoken_languages!.count - 1)
+            {
+                string = "\(string)\(spoken_language), "
+            }
+            else
+            {
+                string = "\(string)\(spoken_language)"
+            }
+            
+            i += 1
+        }
+        
+        return string
+    }
+    
 }

@@ -341,14 +341,18 @@ def delete_movie_from_user_list(user_id: str, movie_id: str):
     return result
 
 
-def get_movies_user_list(user_id: str, watched: bool):
+def get_movies_user_list(user_id: str, watched: bool, favourite: bool):
     """
         Get all movies in the user list, based on watched boolean.
 
         :param user_id: user id.
         :param watched: if the movie is already watched or to watch.
+        :param favourite: if the movie is favourite or not. Favourite can be true only if watched is true
         :return: movies to watch or movies watched
     """
+    if not watched:
+        favourite = False
+
     pipeline = [
         {"$match": {"_id": ObjectId(user_id)}},
         {"$project": {
@@ -356,7 +360,12 @@ def get_movies_user_list(user_id: str, watched: bool):
                 "$filter": {
                     "input": "$movies_list",
                     "as": "movie",
-                    "cond": {"$eq": ["$$movie.watched", watched]}
+                    "cond": {
+                        "$and": [
+                            {"$eq": ["$$movie.watched", watched]},
+                            {"$eq": ["$$movie.favourite", favourite]}
+                        ]
+                    }
                 }
             },
             "_id": 0
