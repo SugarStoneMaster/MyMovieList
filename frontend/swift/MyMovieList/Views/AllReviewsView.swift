@@ -9,7 +9,8 @@ import SwiftUI
 
 struct AllReviewsView: View 
 {
-    let reviews: [Review]
+    @ObservedObject var MviewModel: MovieViewModel
+
 
     var body: some View {
         NavigationStack
@@ -17,7 +18,7 @@ struct AllReviewsView: View
             VStack
             {
                 //ForEach(0..<reviews.count, id: \.self)
-                List(reviews)
+                List(MviewModel.reviews)
                 { review in
                     ReviewView(review: review)
                 }
@@ -25,5 +26,9 @@ struct AllReviewsView: View
         }
             .navigationTitle("All Reviews")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear{
+                MviewModel.getMovieReviews()
+            }
+        
     }
 }

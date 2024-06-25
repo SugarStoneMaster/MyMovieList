@@ -27,7 +27,7 @@ struct WriteReviewView: View {
             }
             .padding()
             Button(action: {
-                UviewModel.addReview(movieId: (MviewModel.singleMovie?._id)!, username: (UviewModel.user?.username)!, userId: (UviewModel.user?._id)!, title: title, content: content, vote: vote)
+                UviewModel.addReview(movieId: (MviewModel.singleMovie?._id)!, username: (UviewModel.user?.username)!, title: title, content: content, vote: vote)
                 presentationMode.wrappedValue.dismiss() // Close the modal
             }) {
                 Text("Submit")
