@@ -8,26 +8,16 @@ enum MovieFilter: String, CaseIterable, Identifiable {
 }
 
 struct MyMovieListView: View {
+    
     @State private var showingSheet = false
     @State private var selectedFilter: MovieFilter = .toWatch
     @State private var isFavoriteFilterActive = false
-    @StateObject private var viewModel = UserViewModel()
+    @State private var watched = false
     @State private var userId = "667590309c7bec2c21dcda9b"
+    @ObservedObject var UviewModel: UserViewModel
+
     
-    var filteredMovies: [Movie] {
-        switch selectedFilter {
-        case .toWatch:
-            return viewModel.movies.filter { !$0.watched! }
-        case .watched:
-            return viewModel.movies.filter {
-                if isFavoriteFilterActive {
-                    return $0.watched! && $0.favourite!
-                } else {
-                    return $0.watched!
-                }
-            }
-        }
-    }
+    
 
     var body: some View {
         NavigationStack {
@@ -35,16 +25,32 @@ struct MyMovieListView: View {
                 VStack {
                     FilterPicker(selectedFilter: $selectedFilter)
                     
-                    MovieGrid(filteredMovies: filteredMovies)
+                    MovieGrid(UviewModel: UviewModel, movies: UviewModel.movies)
 
                 }
-                .background(Color.gray)
+                .background(Color(uiColor: .systemGray6))
                 .navigationTitle("My List")
                 .onAppear {
-                    viewModel.getMoviesUserList(userId: userId, watched: selectedFilter == .watched, favourite: isFavoriteFilterActive)
+                    if(selectedFilter == .toWatch)
+                    {
+                        watched = false
+                    }
+                    else
+                    {
+                        watched = true
+                    }
+                    UviewModel.getMoviesUserList(userId: userId, watched: watched, favourite: isFavoriteFilterActive)
                 }
                 .onChange(of: selectedFilter) { newFilter in
-                    viewModel.getMoviesUserList(userId: userId, watched: newFilter == .watched, favourite: isFavoriteFilterActive)
+                    if(newFilter == .toWatch)
+                    {
+                        watched = false
+                    }
+                    else
+                    {
+                        watched = true
+                    }                    
+                    UviewModel.getMoviesUserList(userId: userId, watched: watched, favourite: isFavoriteFilterActive)
                 }
 
                 if selectedFilter == .watched {
@@ -54,7 +60,8 @@ struct MyMovieListView: View {
                             Spacer()
                             Button(action: {
                                 isFavoriteFilterActive.toggle()
-                                viewModel.getMoviesUserList(userId: userId, watched: true, favourite: isFavoriteFilterActive)
+                                print("prova")
+                                UviewModel.getMoviesUserList(userId: userId, watched: true, favourite: isFavoriteFilterActive)
                             }) {
                                 Image(systemName: isFavoriteFilterActive ? "star.fill" : "star")
                                     .font(.system(size: 24))
@@ -88,7 +95,8 @@ struct FilterPicker: View {
 }
 
 struct MovieGrid: View {
-    var filteredMovies: [Movie]
+    @ObservedObject var UviewModel: UserViewModel
+    var movies: [Movie]
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -96,9 +104,9 @@ struct MovieGrid: View {
                 LazyVGrid(columns: [GridItem(.fixed(90), spacing: 20),
                                     GridItem(.fixed(90), spacing: 20),
                                     GridItem(.fixed(90), spacing: 20)], spacing: 10) {
-                    ForEach(filteredMovies) { movie in
+                    ForEach(movies) { movie in
                         VStack {
-                            NavigationLink(destination: MovieView(movieId: movie._id!), label: {
+                            NavigationLink(destination: MovieView(UviewModel: UviewModel, movieId: movie._id!), label: {
                                 VStack {
                                     AsyncImageView(url: movie.poster!)
                                         .frame(width: 100, height: 141.4) // Adjust the size as needed
@@ -116,6 +124,4 @@ struct MovieGrid: View {
     }
 }
 
-#Preview {
-    MyMovieListView()
-}
+

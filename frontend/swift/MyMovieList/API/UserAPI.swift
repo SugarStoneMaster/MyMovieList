@@ -20,6 +20,10 @@ class UserViewModel: ObservableObject
     @Published var successMessage: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
+    
+    init(user: User? = nil) {
+        self.user = user
+    }
 
     
     func appleSignIn(email: String, username: String)

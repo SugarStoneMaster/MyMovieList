@@ -14,6 +14,10 @@ class MovieViewModel: ObservableObject
     
     @Published var movies: [Movie] = []
     @Published var reviews: [Review] = []
+    @Published var sampleReviews: [Review] = [
+        Review(title: "Great Movie", content: "I really enjoyed this movie. The plot was thrilling and the characters were well-developed.", vote: 8, user: User(username: "john doe"), date: Date()),
+        Review(title: "Not Bad", content: "The movie was okay. It had some good moments but also some flaws.", vote: 2, user: User(username: "Pippo"), date: Date())
+    ]
     @Published var singleMovie: Movie? = nil
     @Published var successMessage: String?
     @Published var errorMessage: String?

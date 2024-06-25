@@ -9,11 +9,13 @@ import SwiftUI
 import Network
 
 struct ContentView: View {
-    var body: some View 
+   @ObservedObject var UviewModel: UserViewModel
+
+    var body: some View
     {
         TabView
         {
-            MyMovieListView().tabItem
+            MyMovieListView(UviewModel: UviewModel).tabItem
             {
                 Image(systemName: "list.and.film")
                     .accessibilityAddTraits([.isButton])
@@ -21,7 +23,7 @@ struct ContentView: View {
                 Text("My list")
             }
             
-            ExploreView().tabItem
+            ExploreView(UviewModel: UviewModel).tabItem
             {
                 Image(systemName: "magnifyingglass")
                     .accessibilityAddTraits([.isButton])
@@ -29,13 +31,15 @@ struct ContentView: View {
                 Text("Explore")
             }
             
-            ProfileView().tabItem
+            SignInWithAppleButtonView().tabItem
             {
                 Image(systemName: "person.crop.circle")
                     .accessibilityAddTraits([.isButton])
                     .accessibilityLabel("Profile")
                 Text("Profile")
             }
+            
+            
             
             
             
@@ -46,6 +50,3 @@ struct ContentView: View {
 
 
 
-#Preview {
-    ContentView()
-}
