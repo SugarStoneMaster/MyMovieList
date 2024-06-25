@@ -117,11 +117,31 @@ def get_movies(offset: int, items_per_page: int, text: Optional[str] = None, pro
         if text:
             text_list = text.split(",")
 
-            query["$or"] = [
-                {"title": {"$regex": text, "$options": "i"}},
-                {"directors": {"$in": text_list}},
-                {"cast": {"$in": text_list}}
-            ]
+            # Construct $or conditions for title, directors, and cast with $regex for partial and full name matching
+            or_conditions = [{"title": {"$regex": text, "$options": "i"}}]
+
+            # For title matching
+
+            # For directors and cast matching
+            director_or_conditions = []
+            actors_or_conditions = []
+
+            for term in text_list:
+                director_or_conditions.append({"directors.full_name": {"$regex": term, "$options": "i"}})
+                actors_or_conditions.append({"actors.full_name": {"$regex": term, "$options": "i"}})
+
+            # Add $in conditions if there are multiple terms
+            if len(director_or_conditions) > 1:
+                or_conditions.append({"$or": director_or_conditions})
+            else:
+                or_conditions.extend(director_or_conditions)
+
+            if len(actors_or_conditions) > 1:
+                or_conditions.append({"$or": actors_or_conditions})
+            else:
+                or_conditions.extend(actors_or_conditions)
+
+            query["$or"] = or_conditions
 
         # Default projection if not provided
         default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
