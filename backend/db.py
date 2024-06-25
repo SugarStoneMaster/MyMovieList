@@ -1,12 +1,3 @@
-"""
-This module contains all database interfacing methods for the MFlix
-application. You will be working on this file for the majority of M220P.
-
-Each method has a short description, and the methods you must implement have
-docstrings with a short explanation of the task.
-
-Look out for TODO markers for additional help. Good luck!
-"""
 import datetime
 import os
 from typing import Optional, Union, List, Tuple
@@ -19,6 +10,15 @@ from werkzeug.local import LocalProxy
 
 # loading variables from .env file
 load_dotenv()
+
+
+class Singleton(dict):
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(Singleton, cls).__new__(cls)
+        return cls._instance
 
 
 def get_db_name():
@@ -79,20 +79,30 @@ def get_db():
 
 # Use LocalProxy to read the global db instance with just `db`
 db = LocalProxy(get_db)
+default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
+movie_review_count = Singleton()
 
 
-def paginate_query(collection, query, offset: int, limit: int):
+def paginate_query(collection, query_dict, projection, offset: int, limit: int, sort=None):
     """
         Paginate a MongoDB query.
-    
+
         :param collection: The collection from which you want to paginate.
-        :param query: The MongoDB query to paginate.
+        :param query_dict: The MongoDB query.
+        :param projection: The fields to include or exclude in the result.
         :param offset: The number of documents to skip.
         :param limit: The maximum number of documents to return.
+        :param sort: The sort order for the query.
         :return: A tuple containing the paginated results and the total count of documents.
     """
+    query = collection.find(query_dict, projection)
+
+    if sort:
+        query = query.sort(sort)
+
+    total_count = collection.count_documents(query_dict)
     results = query.skip(offset).limit(limit)
-    total_count = collection.count_documents({})
+
     return list(results), total_count
 
 
@@ -120,8 +130,6 @@ def get_movies(offset: int, items_per_page: int, text: Optional[str] = None, pro
             # Construct $or conditions for title, directors, and cast with $regex for partial and full name matching
             or_conditions = [{"title": {"$regex": text, "$options": "i"}}]
 
-            # For title matching
-
             # For directors and cast matching
             director_or_conditions = []
             actors_or_conditions = []
@@ -143,17 +151,11 @@ def get_movies(offset: int, items_per_page: int, text: Optional[str] = None, pro
 
             query["$or"] = or_conditions
 
-        # Default projection if not provided
-        default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
         projection = projection or default_projection
 
-        # Construct the MongoDB query with projection
-        movie_query = db.movie.find(query, projection)
-
         # Paginate the query
-        movies, total_movies = paginate_query(db.movie, movie_query, offset, items_per_page)
 
-        return movies, total_movies
+        return paginate_query(db.movie, query, projection, offset, items_per_page)
     except Exception as e:
         return e
 
@@ -173,15 +175,10 @@ def get_movies_by_genres(offset: int, items_per_page: int, genres: Union[List[st
     try:
         query = {"genres": {"$all": genres} if isinstance(genres, list) else genres}
 
-        # Default projection if not provided
-        default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
         projection = projection or default_projection
 
-        # Construct the MongoDB query with projection
-        movie_query = db.movie.find(query, projection)
-
         # Paginate the query
-        return paginate_query(db.movie, movie_query, offset, items_per_page)
+        return paginate_query(db.movie, query, projection, offset, items_per_page)
     except Exception as e:
         return e
 
@@ -202,14 +199,10 @@ def get_movies_by_release_year(offset: int, items_per_page: int, release_year: i
         query = {"release_year": release_year}
 
         # Default projection if not provided
-        default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
         projection = projection or default_projection
 
-        # Construct the MongoDB query with projection
-        movie_query = db.movie.find(query, projection)
-
         # Paginate the query
-        return paginate_query(db.movie, movie_query, offset, items_per_page)
+        return paginate_query(db.movie, query, projection, offset, items_per_page)
     except Exception as e:
         return e
 
@@ -229,19 +222,16 @@ def sort_movies(offset: int, items_per_page: int, field: str, order: str = "-1",
     """
     try:
         # Default projection if not provided
-        default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
         projection = projection or default_projection
 
-        # Construct the MongoDB query with projection
-        movie_query = db.movie.find({}, projection).sort({field: int(order)})
-
         # Paginate the query
-        return paginate_query(db.movie, movie_query, offset, items_per_page)
+        return paginate_query(db.movie, {}, projection, offset, items_per_page, {field: int(order)})
     except Exception as e:
         return e
 
 
-def get_movie_reviews(offset: int, items_per_page: int = None, movie_id: str = None) -> Union[Tuple[List[dict], int], Exception]:
+def get_movie_reviews(offset: int, items_per_page: int = None, movie_id: str = None) -> Union[
+    Tuple[List[dict], int], Exception]:
     """
         Get a movie's reviews.
     
@@ -253,10 +243,10 @@ def get_movie_reviews(offset: int, items_per_page: int = None, movie_id: str = N
     """
     try:
         # Construct the MongoDB query with projection
-        reviews_query = db.review.find({"movie_id": ObjectId(movie_id)})
+        query = {"movie_id": ObjectId(movie_id)}
 
         # Paginate the query
-        return paginate_query(db.review, reviews_query, offset, items_per_page)
+        return paginate_query(db.review, query, {}, offset, items_per_page)
     except Exception as e:
         return e
 
@@ -286,6 +276,7 @@ def apple_sign_in(email, username):
         new_user["_id"] = result.inserted_id
         print(new_user)
         return new_user
+
 
 def add_movie_to_user_list(user_id: str, movie_id: str, title: str, poster: str, watched: bool, favourite: bool):
     """
@@ -418,6 +409,21 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
         "vote": vote
     })
 
+    if review.inserted_id:
+        # update movie
+        movie_reviews = db.movie.find_one({"_id": ObjectId(movie_id)}, {"reviews": 1})
+        movie_reviews.pop()
+        movie_reviews.append(review)
+        db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"reviews": movie_reviews}})
+
+        if movie_id in movie_review_count:
+            movie_review_count[movie_id] += 1
+
+            if movie_review_count[movie_id] >= 5:
+                update_movie_review_stats(movie_id)
+        else:
+            movie_review_count[movie_id] = 1
+
     return review.inserted_id
 
 
@@ -431,7 +437,43 @@ def update_review(review_id: str, title: str, content: str, date: datetime.datet
         }
     })
 
+    review = db.review.find_one({"_id": ObjectId(review_id)})
+
+    if review["movie_id"] in movie_review_count:
+        movie_review_count[review["movie_id"]] += 1
+
+        if movie_review_count[review["movie_id"]] >= 5:
+            update_movie_review_stats(review["movie_id"])
+    else:
+        movie_review_count["movie_id"] = 1
+
     return result.modified_count > 0
+
+
+def update_movie_review_stats(movie_id: str):
+    pipeline = [
+        {"$match": {"movie_id": ObjectId(movie_id)}},
+        {"$group": {
+            "_id": "$movie_id",
+            "average_vote": {"$avg": "$vote"},
+            "vote_count": {"$sum": 1}
+        }}
+    ]
+
+    result = list(db.review.aggregate(pipeline))
+
+    if result:
+        average_vote = result[0]["average_vote"]
+        vote_count = result[0]["vote_count"]
+    else:
+        average_vote = 0  # Handle the case where there are no reviews
+        vote_count = 0
+
+    # Update the movie document with the vote count and average vote
+    db.movie.update_one(
+        {"_id": ObjectId(movie_id)},
+        {"$set": {"average_vote": average_vote, "vote_count": vote_count}}
+    )
 
 
 # REVIEW QUERIES -- END

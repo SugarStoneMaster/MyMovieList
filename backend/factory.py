@@ -1,16 +1,14 @@
-import os
 import json
+from datetime import datetime
 
+from bson import json_util, ObjectId
 from flask import Flask, render_template
 from flask.json.provider import JSONProvider
 from flask_cors import CORS
 
-from bson import json_util, ObjectId
-from datetime import datetime
-
 from api.movies import movies_api
-from api.user import user_api
 from api.troupe import troupe_api
+from api.user import user_api
 
 
 # https://stackoverflow.com/questions/44146087/pass-user-built-json-encoder-into-flasks-jsonify
@@ -32,9 +30,9 @@ class MongoJsonProvider(JSONProvider):
 
 
 def create_app():
-    APP_DIR = os.path.abspath(os.path.dirname(__file__))
-    STATIC_FOLDER = os.path.join(APP_DIR, 'build/static')
-    TEMPLATE_FOLDER = os.path.join(APP_DIR, 'build')
+    # APP_DIR = os.path.abspath(os.path.dirname(__file__))
+    # STATIC_FOLDER = os.path.join(APP_DIR, 'build/static')
+    # TEMPLATE_FOLDER = os.path.join(APP_DIR, 'build')
 
     app = Flask(__name__)
     CORS(app)

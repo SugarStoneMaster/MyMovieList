@@ -19,6 +19,7 @@ def paginate_items(get_movies_func, **kwargs):
         page = 0
 
     offset = page * DEFAULT_ITEMS_PER_PAGE
+
     try:
         movies, total_results = get_movies_func(offset=offset, items_per_page=DEFAULT_ITEMS_PER_PAGE, **kwargs)
     except TypeError as e:
@@ -29,7 +30,7 @@ def paginate_items(get_movies_func, **kwargs):
         "items": movies,
         "page": page,
         "entries_per_page": DEFAULT_ITEMS_PER_PAGE,
-        "total_results": total_results
+        "total_results": total_results,
     }
 
     return jsonify(response)
