@@ -12,6 +12,7 @@ user_api = Blueprint(
 
 CORS(user_api)
 
+
 @user_api.route("/apple_sign_in", methods=['POST'])
 def api_apple_sign_in():
     data = request.get_json()
@@ -34,7 +35,7 @@ def api_add_movie_to_user_list():
 
     print(data)
     #if not all([user_id, movie_id, title, poster, watched, favourite is not None]):
-        #return jsonify({"error": "Missing required parameters"}), 400
+    #return jsonify({"error": "Missing required parameters"}), 400
 
     result = add_movie_to_user_list(user_id, movie_id, title, poster, watched, favourite)
 
@@ -55,7 +56,7 @@ def api_update_movie_in_user_list():
     favourite = favourite.lower() == 'true'
 
     #if not all([user_id, movie_id, watched, favourite is not None]):
-        #return jsonify({"error": "Missing required parameters"}), 400
+    #return jsonify({"error": "Missing required parameters"}), 400
 
     result = update_movie_in_user_list(user_id, movie_id, watched, favourite)
 
@@ -127,7 +128,7 @@ def api_update_review(review_id):
         return jsonify({"error": "Missing required parameters"}), 400
 
     # Add the review to the movie document
-    result = update_review(review_id=review_id,title=title, content=content,
+    result = update_review(review_id=review_id, title=title, content=content,
                            vote=vote, date=date)
 
     if result:

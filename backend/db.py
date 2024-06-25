@@ -116,9 +116,12 @@ def get_movies(offset: int, items_per_page: int, text: Optional[str] = None, pro
 
         if text:
             text_list = text.split(",")
-            query["title"] = text
-            query["directors"] = {"$in": text_list}
-            query["cast"] = {"$in": text_list}
+
+            query["$or"] = [
+                {"title": {"$regex": text, "$options": "i"}},
+                {"directors": {"$in": text_list}},
+                {"cast": {"$in": text_list}}
+            ]
 
         # Default projection if not provided
         default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
