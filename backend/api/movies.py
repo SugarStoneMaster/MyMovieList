@@ -39,10 +39,12 @@ def paginate_items(get_movies_func, **kwargs):
 def api_get_movies(text):
     return paginate_items(get_movies, text=text)
 
+
 @movies_api.route('/get_movies_by_genres', methods=['GET'])
 def api_get_movies_by_genres():
     genres = request.args.getlist('genres')
     return paginate_items(get_movies_by_genres, genres=genres)
+
 
 @movies_api.route('/release_year/<int:year>', methods=['GET'])
 def api_get_movies_by_release_year(year):
@@ -53,11 +55,12 @@ def api_get_movies_by_release_year(year):
 def api_sort_movies(field, order):
     return paginate_items(sort_movies, field=field, order=order)
 
+
 @movies_api.route('/reviews/<movie_id>', methods=['GET'])
 def api_get_movies_reviews(movie_id):
     return paginate_items(get_movie_reviews, movie_id=movie_id)
 
+
 @movies_api.route('/get_movie/<movie_id>', methods=['GET'])
 def api_get_movie(movie_id):
     return get_movie(movie_id)
-
