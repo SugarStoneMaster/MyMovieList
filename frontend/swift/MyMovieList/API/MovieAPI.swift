@@ -139,9 +139,9 @@ class MovieViewModel: ObservableObject
        }
     
     
-    func getMovieReviews(movieId: String)
+    func getMovieReviews()
     {
-        guard let url = URL(string: baseUrl + urlSub + "reviews/\(movieId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "reviews/\(singleMovie!._id!)") else {
                print("Invalid URL")
                return
            }

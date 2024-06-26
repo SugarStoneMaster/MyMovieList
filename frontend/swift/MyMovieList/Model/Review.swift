@@ -42,13 +42,16 @@ class Review: Identifiable, Codable
             content = try? container.decode(String.self, forKey: .content)
             vote = try? container.decode(Int.self, forKey: .vote)
             user = try? container.decode(User.self, forKey: .user)
+        
             
             let dateString = try? container.decode(String.self, forKey: .date)
             if let dateString = dateString {
                 let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd"
+                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
                 date = dateFormatter.date(from: dateString)
             }
+
+
         }
     
 }

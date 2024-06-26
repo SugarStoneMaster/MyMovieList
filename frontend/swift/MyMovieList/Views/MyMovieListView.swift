@@ -13,7 +13,6 @@ struct MyMovieListView: View {
     @State private var selectedFilter: MovieFilter = .toWatch
     @State private var isFavoriteFilterActive = false
     @State private var watched = false
-    @State private var userId = "667590309c7bec2c21dcda9b"
     @ObservedObject var UviewModel: UserViewModel
 
     
@@ -39,7 +38,7 @@ struct MyMovieListView: View {
                     {
                         watched = true
                     }
-                    UviewModel.getMoviesUserList(userId: userId, watched: watched, favourite: isFavoriteFilterActive)
+                    UviewModel.getMoviesUserList(watched: watched, favourite: isFavoriteFilterActive)
                 }
                 .onChange(of: selectedFilter) { newFilter in
                     if(newFilter == .toWatch)
@@ -50,7 +49,7 @@ struct MyMovieListView: View {
                     {
                         watched = true
                     }                    
-                    UviewModel.getMoviesUserList(userId: userId, watched: watched, favourite: isFavoriteFilterActive)
+                    UviewModel.getMoviesUserList(watched: watched, favourite: isFavoriteFilterActive)
                 }
 
                 if selectedFilter == .watched {
@@ -61,7 +60,7 @@ struct MyMovieListView: View {
                             Button(action: {
                                 isFavoriteFilterActive.toggle()
                                 print("prova")
-                                UviewModel.getMoviesUserList(userId: userId, watched: true, favourite: isFavoriteFilterActive)
+                                UviewModel.getMoviesUserList(watched: true, favourite: isFavoriteFilterActive)
                             }) {
                                 Image(systemName: isFavoriteFilterActive ? "star.fill" : "star")
                                     .font(.system(size: 24))

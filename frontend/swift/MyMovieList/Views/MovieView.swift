@@ -63,7 +63,7 @@ struct MovieView: View {
                         
                        
                             
-                        FiveReviewsView(reviews: MviewModel.sampleReviews, UviewModel: UviewModel, MviewModel: MviewModel)
+                        FiveReviewsView(reviews: (MviewModel.singleMovie?.reviews)!, UviewModel: UviewModel, MviewModel: MviewModel)
                         
                         
                             
@@ -265,8 +265,8 @@ struct FiveReviewsView: View
     let reviews: [Review]
     @State private var showAllReviews = false
     @State private var showWriteReview = false
-    var UviewModel: UserViewModel
-    var MviewModel: MovieViewModel
+    @ObservedObject var UviewModel: UserViewModel
+    @ObservedObject var MviewModel: MovieViewModel
 
     
 
@@ -293,10 +293,12 @@ struct FiveReviewsView: View
                 
                 HStack 
                 {
-                    NavigationLink(destination: AllReviewsView(reviews: reviews)) {
+                    NavigationLink(destination: AllReviewsView(MviewModel: MviewModel)) {
                         Text("Show All Reviews")
                             .font(.body)
                             .foregroundColor(.blue)
+                    }
+                        
                     }
                     
                     Spacer()
@@ -319,7 +321,6 @@ struct FiveReviewsView: View
             }
             
         }
-    }
 }
 
 struct StarsView: View {

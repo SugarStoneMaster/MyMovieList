@@ -64,7 +64,7 @@ class UserViewModel: ObservableObject
     }
     
     
-    func addMovieToUserList(userId: String, movieId: String, title: String, poster: String, watched: Bool, favourite: Bool)
+    func addMovieToUserList(movieId: String, title: String, poster: String, watched: Bool, favourite: Bool)
     {
         guard let url = URL(string: baseUrl + urlSub + "add_movie_to_user_list") else {
                     self.errorMessage = "Invalid URL"
@@ -75,7 +75,7 @@ class UserViewModel: ObservableObject
                 request.httpMethod = "POST"
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 let body: [String: Any] = [
-                    "user_id": userId,
+                    "user_id": user!._id!,
                     "movie_id": movieId,
                     "title": title,
                     "poster": poster,
@@ -126,7 +126,7 @@ class UserViewModel: ObservableObject
     }
     
     
-    func updateMovieInUserList(userId: String, movieId: String, watched: Bool, favourite: Bool)
+    func updateMovieInUserList(movieId: String, watched: Bool, favourite: Bool)
     {
         guard let url = URL(string: baseUrl + urlSub + "update_movie_in_user_list") else {
                     self.errorMessage = "Invalid URL"
@@ -137,7 +137,7 @@ class UserViewModel: ObservableObject
                 request.httpMethod = "POST"
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 let body: [String: Any] = [
-                    "user_id": userId,
+                    "user_id": user!._id!,
                     "movie_id": movieId,
                     "watched": String(watched),
                     "favourite": String(favourite)
@@ -186,9 +186,9 @@ class UserViewModel: ObservableObject
     }
     
     
-    func deleteMovieFromUserList(userId: String, movieId: String) 
+    func deleteMovieFromUserList(movieId: String)
     {
-            guard let url = URL(string: baseUrl + urlSub + "delete_movie_from_user_list/\(userId)/\(movieId)") else {
+        guard let url = URL(string: baseUrl + urlSub + "delete_movie_from_user_list/\(user!._id!)/\(movieId)") else {
                 self.errorMessage = "Invalid URL"
                 return
             }
@@ -233,9 +233,9 @@ class UserViewModel: ObservableObject
     
     
     
-    func getMoviesUserList(userId: String, watched: Bool, favourite: Bool)
+    func getMoviesUserList(watched: Bool, favourite: Bool)
     {
-        guard let url = URL(string: baseUrl + urlSub + "get_movies_user_list/\(userId)/\(watched)/\(favourite)") else {
+        guard let url = URL(string: baseUrl + urlSub + "get_movies_user_list/\(user!._id!)/\(watched)/\(favourite)") else {
                print("Invalid URL")
                return
            }
@@ -258,7 +258,7 @@ class UserViewModel: ObservableObject
        }
     
     
-    func addReview(movieId: String, username: String, userId: String, title: String, content: String, vote: Int)
+    func addReview(movieId: String, username: String, title: String, content: String, vote: Int)
     {
         guard let url = URL(string: baseUrl + urlSub + "add_review/\(movieId)") else {
                     self.errorMessage = "Invalid URL"
@@ -270,7 +270,7 @@ class UserViewModel: ObservableObject
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 let body: [String: Any] = [
                     "username": username,
-                    "user_id": userId,
+                    "user_id": user!._id!,
                     "title": title,
                     "content": content,
                     "vote": String(vote)
@@ -303,7 +303,7 @@ class UserViewModel: ObservableObject
                     
                         if(self.errorMessage == nil)
                         {
-                            var addedReview = Review(title: title, content: content,  vote: vote, user: User(_id: userId, username: username))
+                            var addedReview = Review(title: title, content: content,  vote: vote, user: User(_id: self.user!._id!, username: username))
                             self.reviews.append(addedReview)
                         }
                         
