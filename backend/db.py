@@ -411,9 +411,18 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
 
     if review.inserted_id:
         # update movie
-        movie_reviews = db.movie.find_one({"_id": ObjectId(movie_id)}, {"reviews": 1})
-        movie_reviews.pop()
-        movie_reviews.append(review)
+        review_document = db.review.find_one({"_id": ObjectId(review.inserted_id)})
+        movie_document = db.movie.find_one({"_id": ObjectId(movie_id)}, {"reviews": 1})
+        movie_reviews = []
+
+        if movie_document:
+            movie_reviews = movie_document["reviews"]
+
+            if len(movie_reviews) > 0:
+                movie_reviews = sorted(movie_reviews, key=lambda x: x["date"])
+                movie_reviews.pop(0)
+
+        movie_reviews.append(review_document)
         db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"reviews": movie_reviews}})
 
         if movie_id in movie_review_count:
@@ -427,25 +436,24 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
     return review.inserted_id
 
 
-def update_review(review_id: str, title: str, content: str, date: datetime.datetime, vote: float):
+def update_review(review_id: str, title: str, content: str, vote: float):
+    review = db.review.find_one({"_id": ObjectId(review_id)})
     result = db.review.update_one({"_id": ObjectId(review_id)}, {
         "$set": {
             "title": title,
             "content": content,
-            "date": date,
             "vote": vote
         }
     })
 
-    review = db.review.find_one({"_id": ObjectId(review_id)})
+    if review["vote"] != vote:
+        if review["movie_id"] in movie_review_count:
+            movie_review_count[review["movie_id"]] += 1
 
-    if review["movie_id"] in movie_review_count:
-        movie_review_count[review["movie_id"]] += 1
-
-        if movie_review_count[review["movie_id"]] >= 5:
-            update_movie_review_stats(review["movie_id"])
-    else:
-        movie_review_count["movie_id"] = 1
+            if movie_review_count[review["movie_id"]] >= 5:
+                update_movie_review_stats(review["movie_id"])
+        else:
+            movie_review_count[review["movie_id"]] = 1
 
     return result.modified_count > 0
 
@@ -474,6 +482,8 @@ def update_movie_review_stats(movie_id: str):
         {"_id": ObjectId(movie_id)},
         {"$set": {"average_vote": average_vote, "vote_count": vote_count}}
     )
+
+    movie_review_count[movie_id] = 0
 
 
 # REVIEW QUERIES -- END
