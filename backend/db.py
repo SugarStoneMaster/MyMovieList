@@ -79,8 +79,13 @@ def get_db():
 
 # Use LocalProxy to read the global db instance with just `db`
 db = LocalProxy(get_db)
+
 default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
+
+APPROXIMATION_COUNT = 5
 movie_review_count = Singleton()
+movie_added_count = Singleton()
+movie_watched_count = Singleton()
 
 
 def paginate_query(collection, query_dict, projection, offset: int, limit: int, sort=None):
@@ -484,6 +489,20 @@ def update_movie_review_stats(movie_id: str):
     )
 
     movie_review_count[movie_id] = 0
+
+
+def update_movie_added_count(movie_id: str):
+    result = list(db.user.find({"movies_list._id": ObjectId(movie_id)}))
+
+    db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"added_count": len(result)}})
+    movie_added_count[movie_id] = 0
+
+
+def update_movie_watched_count(movie_id: str):
+    result = list(db.user.find({"movies_list.watched": True}))
+
+    db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"watched_count": len(result)}})
+    movie_watched_count[movie_id] = 0
 
 
 # REVIEW QUERIES -- END
