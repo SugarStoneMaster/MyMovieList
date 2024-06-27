@@ -40,9 +40,9 @@ def api_add_movie_to_user_list():
     result = add_movie_to_user_list(user_id, movie_id, title, poster, watched, favourite)
 
     if result.modified_count > 0:
-        return jsonify({"message": "Successfully added movie."}), 200
+        return jsonify({"message": "Successfully added movie."})
     else:
-        return jsonify({"message": "No documents were added."}), 200
+        return jsonify({"message": "No documents were added."})
 
 
 @user_api.route('/update_movie_in_user_list', methods=['POST'])
@@ -61,7 +61,7 @@ def api_update_movie_in_user_list():
     result = update_movie_in_user_list(user_id, movie_id, watched, favourite)
 
     if result.modified_count > 0:
-        return jsonify({"message": "Successfully updated the movie's watched status."}), 200
+        return jsonify({"message": "Successfully updated the movie's watched status."})
     else:
         return jsonify({"message": "No documents were updated. Either the user or movie was not found."}), 200
 
@@ -121,17 +121,16 @@ def api_update_review(review_id):
     data = request.get_json()
     title = data.get('title')
     content = data.get('content')
-    vote = float(data.get('vote'))*2
-    date = datetime.now()
+    vote = float(data.get('vote')*2)
 
-    if not all([title, content, vote, date, review_id]):
+    if not all([title, content, vote, review_id]):
         return jsonify({"error": "Missing required parameters"}), 400
 
     # Add the review to the movie document
     result = update_review(review_id=review_id, title=title, content=content,
-                           vote=vote, date=date)
+                           vote=vote)
 
     if result:
-        return jsonify({"message": "Successfully updated review."}), 200
+        return jsonify({"message": "Successfully updated review."})
     else:
         return jsonify({"message": "No review was updated."}), 200

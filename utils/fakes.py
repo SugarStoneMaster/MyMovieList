@@ -48,7 +48,7 @@ def generate_reviews(users: list[dict], movies: list[dict], n: int = 1000) -> li
         movie = random.choice(movies)
         vote = random.randint(0, 10)
         movie["vote_count"] = movie.get("vote_count", 0) + 1
-        movie["vote_average"] = round((movie.get("vote_average", 0) + vote) / 2, 2)
+        movie["vote_average"] = round((movie.get("vote_average", 0) + vote) / movie["vote_count"], 2)
 
         review = {
             "user": random.choice(users),

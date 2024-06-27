@@ -79,8 +79,13 @@ def get_db():
 
 # Use LocalProxy to read the global db instance with just `db`
 db = LocalProxy(get_db)
+
 default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
+
+APPROXIMATION_COUNT = 5
 movie_review_count = Singleton()
+movie_added_count = Singleton()
+movie_watched_count = Singleton()
 
 
 def paginate_query(collection, query_dict, projection, offset: int, limit: int, sort=None):
@@ -411,9 +416,18 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
 
     if review.inserted_id:
         # update movie
-        movie_reviews = db.movie.find_one({"_id": ObjectId(movie_id)}, {"reviews": 1})
-        movie_reviews.pop()
-        movie_reviews.append(review)
+        review_document = db.review.find_one({"_id": ObjectId(review.inserted_id)})
+        movie_document = db.movie.find_one({"_id": ObjectId(movie_id)}, {"reviews": 1})
+        movie_reviews = []
+
+        if movie_document:
+            movie_reviews = movie_document["reviews"]
+
+            if len(movie_reviews) > 0:
+                movie_reviews = sorted(movie_reviews, key=lambda x: x["date"])
+                movie_reviews.pop(0)
+
+        movie_reviews.append(review_document)
         db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"reviews": movie_reviews}})
 
         if movie_id in movie_review_count:
@@ -427,25 +441,24 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
     return review.inserted_id
 
 
-def update_review(review_id: str, title: str, content: str, date: datetime.datetime, vote: float):
+def update_review(review_id: str, title: str, content: str, vote: float):
+    review = db.review.find_one({"_id": ObjectId(review_id)})
     result = db.review.update_one({"_id": ObjectId(review_id)}, {
         "$set": {
             "title": title,
             "content": content,
-            "date": date,
             "vote": vote
         }
     })
 
-    review = db.review.find_one({"_id": ObjectId(review_id)})
+    if review["vote"] != vote:
+        if review["movie_id"] in movie_review_count:
+            movie_review_count[review["movie_id"]] += 1
 
-    if review["movie_id"] in movie_review_count:
-        movie_review_count[review["movie_id"]] += 1
-
-        if movie_review_count[review["movie_id"]] >= 5:
-            update_movie_review_stats(review["movie_id"])
-    else:
-        movie_review_count["movie_id"] = 1
+            if movie_review_count[review["movie_id"]] >= 5:
+                update_movie_review_stats(review["movie_id"])
+        else:
+            movie_review_count[review["movie_id"]] = 1
 
     return result.modified_count > 0
 
@@ -474,6 +487,22 @@ def update_movie_review_stats(movie_id: str):
         {"_id": ObjectId(movie_id)},
         {"$set": {"average_vote": average_vote, "vote_count": vote_count}}
     )
+
+    movie_review_count[movie_id] = 0
+
+
+def update_movie_added_count(movie_id: str):
+    result = list(db.user.find({"movies_list._id": ObjectId(movie_id)}))
+
+    db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"added_count": len(result)}})
+    movie_added_count[movie_id] = 0
+
+
+def update_movie_watched_count(movie_id: str):
+    result = list(db.user.find({"movies_list.watched": True}))
+
+    db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"watched_count": len(result)}})
+    movie_watched_count[movie_id] = 0
 
 
 # REVIEW QUERIES -- END

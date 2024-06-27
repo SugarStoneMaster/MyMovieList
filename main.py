@@ -23,8 +23,6 @@ def get_movies_and_troupe(data) -> tuple[list, list]:
 
         movie["title"] = movieRow["title"]
         movie["tagline"] = movieRow["tagline"]
-        movie["vote_average"] = round(movieRow["vote_average"], 2)
-        movie["vote_count"] = movieRow["vote_count"]
         movie["release_date"] = datetime.strptime(movieRow["release_date"], "%Y-%m-%d").isoformat()
         movie["release_year"] = movieRow["release_year"]
         movie["overview"] = movieRow["overview"]
@@ -250,6 +248,10 @@ def main():
         movie_coll.delete_many({})
         close_connection(client)
         raise ValueError("No user was inserted")
+    else:
+        for movie in movies:
+            movie_coll.update_one({"_id": movie["_id"]}, {"$set": {"added_count": movie["added_count"],
+                                                                   "watched_count": movie["watched_count"]}})
 
     update_coll_with_ids(users, users_ids)
 
@@ -272,7 +274,9 @@ def main():
                 movies_with_reviews.append(movie)
 
         for movie in movies_with_reviews:
-            movie_coll.update_one({"_id": movie["_id"]}, {"$set": {"reviews": movie["reviews"]}})
+            movie_coll.update_one({"_id": movie["_id"]}, {"$set": {"reviews": movie["reviews"],
+                                                                   "vote_count": movie["vote_count"],
+                                                                   "vote_average": movie["vote_average"]}})
 
     print(f"Inserted {len(movies_ids.inserted_ids)} movies\nInserted {len(troupe_ids.inserted_ids)} troupe data\n" +
           f"Inserted {len(users_ids.inserted_ids)} users\nInserted {len(review_ids.inserted_ids)} reviews")
