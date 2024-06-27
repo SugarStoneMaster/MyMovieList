@@ -97,7 +97,7 @@ def api_add_review(movie_id):
     user_id = data.get('user_id')
     title = data.get('title')
     content = data.get('content')
-    vote = float(data.get('vote'))
+    vote = float(data.get('vote'))*2
     date = datetime.now()
 
     if not all([user_id, title, content, vote, date, movie_id]):
@@ -121,7 +121,7 @@ def api_update_review(review_id):
     data = request.get_json()
     title = data.get('title')
     content = data.get('content')
-    vote = data.get('vote')
+    vote = float(data.get('vote'))*2
     date = datetime.now()
 
     if not all([title, content, vote, date, review_id]):

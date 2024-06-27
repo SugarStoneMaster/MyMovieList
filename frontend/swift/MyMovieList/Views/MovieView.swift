@@ -53,10 +53,10 @@ struct MovieView: View {
                         Text(MviewModel.singleMovie!.overview!).padding(.horizontal, 15).multilineTextAlignment(.center)
                         
                         
-                        DirectorsView(directors: MviewModel.singleMovie!.directors!)
+                        DirectorsView(UviewModel: UviewModel, directors: MviewModel.singleMovie!.directors!)
                         
                         
-                        CastView(actors: MviewModel.singleMovie!.actors!)
+                        CastView(UviewModel: UviewModel, actors: MviewModel.singleMovie!.actors!)
                         
                         
                         OtherInfosView(companies: MviewModel.singleMovie!.getCompanies(), languages: MviewModel.singleMovie!.getLanguages())
@@ -163,7 +163,9 @@ struct MainInfosMovieView: View {
 
 struct DirectorsView: View
 {
+    @ObservedObject var UviewModel: UserViewModel
     var directors: [Troupe]
+    
     var body: some View
     {
         HStack
@@ -208,6 +210,7 @@ struct DirectorsView: View
 
 struct CastView: View
 {
+    @ObservedObject var UviewModel: UserViewModel
     var actors: [Troupe]
     
     var body: some View
@@ -229,28 +232,23 @@ struct CastView: View
                     Spacer()
                     HStack(spacing: 20)
                     {
-                        ForEach(actors)
-                        {actor in
-                            VStack()
-                            {
-                                
-                                Image("Zindre").resizable().frame(width: 100, height: 141)
-                                HStack
-                                {
-                                    Text(actor.full_name!)
-                                }.padding(.horizontal, 30)
-                                
-                            }
-                            .padding(.horizontal)
-                            
-                            Divider()
-                        }
-
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(8)
-                }
+                        ForEach(actors) { actor in
+                                            NavigationLink(destination: TroupeDetailView(troupe: actor, UviewModel: UviewModel)) {
+                                                VStack {
+                                                    Image("Zindre")
+                                                        .resizable()
+                                                        .frame(width: 100, height: 141)
+                                                    Text(actor.full_name ?? "Unknown Actor")
+                                                        .padding(.horizontal, 30)
+                                                }
+                                                .padding(.horizontal)
+                                            }
+                                        }
+                                    }
+                                    .padding()
+                                    .background(Color.gray.opacity(0.2))
+                                    .cornerRadius(8)
+                                }
                 
                 Divider().padding(.horizontal, 20)
             }
