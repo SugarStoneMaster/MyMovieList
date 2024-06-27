@@ -14,17 +14,21 @@ class MovieViewModel: ObservableObject
     
     @Published var movies: [Movie] = []
     @Published var reviews: [Review] = []
-    @Published var sampleReviews: [Review] = [
-        Review(title: "Great Movie", content: "I really enjoyed this movie. The plot was thrilling and the characters were well-developed.", vote: 8, user: User(username: "john doe"), date: Date()),
-        Review(title: "Not Bad", content: "The movie was okay. It had some good moments but also some flaws.", vote: 2, user: User(username: "Pippo"), date: Date())
-    ]
     @Published var singleMovie: Movie? = nil
+    
+    @Published var adventureMovies: [Movie] = []
+    @Published var comedyMovies: [Movie] = []
+    @Published var thrillerMovies: [Movie] = []
+    @Published var popularMovies: [Movie] = []
+    @Published var latestMovies: [Movie] = []
+    @Published var mostWatchedMovies: [Movie] = []
+
+    
     @Published var successMessage: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
    
-    //TODO da testare e richiamare ogni volta che la search bar cambia
     func getMovies(text: String)
     {
         guard let url = URL(string: baseUrl + urlSub + "get_movies/\(text)") else {
@@ -71,6 +75,18 @@ class MovieViewModel: ObservableObject
                        let jsonData = try JSONSerialization.data(withJSONObject: moviesArray, options: [])
                        let movies = try JSONDecoder().decode([Movie].self, from: jsonData)
                        DispatchQueue.main.async {
+                           if(genres[0] == "Adventure")
+                           {
+                               self.adventureMovies = movies
+                           }
+                           if(genres[0] == "Comedy")
+                           {
+                               self.comedyMovies = movies
+                           }
+                           if(genres[0] == "Thriller")
+                           {
+                               self.thrillerMovies = movies
+                           }
                            self.movies = movies
                        }
                    } catch {
@@ -127,6 +143,18 @@ class MovieViewModel: ObservableObject
                        let jsonData = try JSONSerialization.data(withJSONObject: moviesArray, options: [])
                        let movies = try JSONDecoder().decode([Movie].self, from: jsonData)
                        DispatchQueue.main.async {
+                           if(field == "release_date")
+                           {
+                               self.latestMovies = movies
+                           }
+                           if(field == "popularity")
+                           {
+                               self.popularMovies = movies
+                           }
+                           if(field == "watched_count")
+                           {
+                               self.mostWatchedMovies = movies
+                           }
                            self.movies = movies
                        }
                    } catch {

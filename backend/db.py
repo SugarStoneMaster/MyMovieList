@@ -428,6 +428,7 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
                 movie_reviews.pop(0)
 
         movie_reviews.append(review_document)
+        movie_reviews = sorted(movie_reviews, key=lambda x: x["date"], reverse=True)
         db.movie.update_one({"_id": ObjectId(movie_id)}, {"$set": {"reviews": movie_reviews}})
 
         if movie_id in movie_review_count:

@@ -6,9 +6,9 @@
 //
 
 import Foundation
+import SwiftUI
 
-
-class Movie: Identifiable, Codable
+class Movie: Identifiable, Codable, ObservableObject
 {
     var _id: String?
     var title: String?
@@ -35,6 +35,7 @@ class Movie: Identifiable, Codable
     var reviews: [Review]?
     var watched: Bool?
     var favourite: Bool?
+    @Published var posterByte: UIImage?
     
     enum CodingKeys: String, CodingKey {
             case _id

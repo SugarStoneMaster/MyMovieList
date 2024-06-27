@@ -107,7 +107,7 @@ struct MovieGrid: View {
                         VStack {
                             NavigationLink(destination: MovieView(UviewModel: UviewModel, movieId: movie._id!), label: {
                                 VStack {
-                                    AsyncImageView(url: movie.poster!)
+                                    AsyncImageView(url: movie.poster!, movie: movie)
                                         .frame(width: 100, height: 141.4) // Adjust the size as needed
                                         .cornerRadius(8)
                                         .shadow(radius: 4)

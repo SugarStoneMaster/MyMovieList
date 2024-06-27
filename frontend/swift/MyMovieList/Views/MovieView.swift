@@ -10,70 +10,62 @@ import SwiftUI
 struct MovieView: View {
     @StateObject var MviewModel = MovieViewModel()
     @ObservedObject var UviewModel: UserViewModel
-
     let movieId: String
-    
 
-    var body: some View 
-    {
-        NavigationStack 
-        {
-            if MviewModel.singleMovie != nil
-            {
-                ScrollView (showsIndicators: false)
-                {
-                    VStack 
-                    {
-                        AsyncImageView(url: MviewModel.singleMovie!.poster!)
+    var body: some View {
+        NavigationStack {
+            if let singleMovie = MviewModel.singleMovie {
+                ScrollView(showsIndicators: false) {
+                    VStack {
+                        AsyncImageView(url: singleMovie.poster!, movie: singleMovie)
                             .frame(width: 200, height: 282.8)
                             .cornerRadius(8)
                             .shadow(radius: 4)
-                        
-                        Text(MviewModel.singleMovie!.title!)
+
+                        Text(singleMovie.title!)
                             .monospaced()
-                            .padding(.top, 10).fontWeight(Font.Weight.heavy)
-                        
-                        
-                        Text(MviewModel.singleMovie!.tagline!)
-                            .padding(.top, 3).italic().padding(.horizontal, 15).multilineTextAlignment(.center)
-                        
-                        Text(MviewModel.singleMovie!.getGenres())
-                            .padding(.top, 3).padding(.horizontal, 15).multilineTextAlignment(.center)
-                        
-                        
-                        MainInfosMovieView(singleMovie: MviewModel.singleMovie!)
-                        
-                        
-                        HStack
-                        {
-                            Text("Overview").font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
+                            .padding(.top, 10)
+                            .fontWeight(.heavy)
+
+                        Text(singleMovie.tagline!)
+                            .padding(.top, 3)
+                            .italic()
+                            .padding(.horizontal, 15)
+                            .multilineTextAlignment(.center)
+
+                        Text(singleMovie.getGenres())
+                            .padding(.top, 3)
+                            .padding(.horizontal, 15)
+                            .multilineTextAlignment(.center)
+
+                        MainInfosMovieView(singleMovie: singleMovie)
+
+                        HStack {
+                            Text("Overview")
+                                .font(.title)
                             Spacer()
-                        }.padding(.horizontal, 20).padding(.vertical, 10)
-                        
-                        Text(MviewModel.singleMovie!.overview!).padding(.horizontal, 15).multilineTextAlignment(.center)
-                        
-                        
-                        DirectorsView(UviewModel: UviewModel, directors: MviewModel.singleMovie!.directors!)
-                        
-                        
-                        CastView(UviewModel: UviewModel, actors: MviewModel.singleMovie!.actors!)
-                        
-                        
-                        OtherInfosView(companies: MviewModel.singleMovie!.getCompanies(), languages: MviewModel.singleMovie!.getLanguages())
-                        
-                       
-                            
-                        FiveReviewsView(reviews: (MviewModel.singleMovie?.reviews)!, UviewModel: UviewModel, MviewModel: MviewModel)
-                        
-                        
-                            
-                        
-                        
-                        
-                        
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+
+                        Text(singleMovie.overview!)
+                            .padding(.horizontal, 15)
+                            .multilineTextAlignment(.center)
+
+                        DirectorsView(UviewModel: UviewModel, directors: singleMovie.directors!)
+
+                        CastView(UviewModel: UviewModel, actors: singleMovie.actors!)
+
+                        OtherInfosView(companies: singleMovie.getCompanies(), languages: singleMovie.getLanguages())
+
+                        // Pass singleMovie's reviews directly
+                        FiveReviewsView(reviews: singleMovie.reviews ?? [], UviewModel: UviewModel, MviewModel: MviewModel)
                     }
                     .padding(.vertical, 5)
-                }.onAppear{print(UviewModel.user?.username)}
+                }
+                .onAppear {
+                    MviewModel.getMovie(movieId: movieId)
+                }
             }
         }
         .onAppear {
@@ -81,6 +73,7 @@ struct MovieView: View {
         }
     }
 }
+
 
 
 
@@ -178,11 +171,16 @@ struct DirectorsView: View
         {
             VStack
             {
-                Image("Zindre").resizable().frame(width: 100, height: 141)
-                HStack
-                {
-                    Text((directors[0].full_name)!)
-                }.padding(.horizontal, 20)
+                NavigationLink(destination: TroupeDetailView(troupe: directors[0], UviewModel: UviewModel, navTitle: "Director", header: "Directed")) {
+                    VStack {
+                        Image("Zindre")
+                            .resizable()
+                            .frame(width: 100, height: 141)
+                        Text(directors[0].full_name ?? "Unknown Director")
+                            .padding(.horizontal, 0)
+                    }
+                    .padding(.horizontal)
+                }.buttonStyle(PlainButtonStyle())
                 
             }.padding(.vertical, 20)
                 .background(Color.gray.opacity(0.2))
@@ -192,11 +190,16 @@ struct DirectorsView: View
             {
                 VStack
                 {
-                    Image("Zindre").resizable().frame(width: 100, height: 141)
-                    HStack
-                    {
-                        Text((directors[0].full_name)!)
-                    }.padding(.horizontal, 20)
+                    NavigationLink(destination: TroupeDetailView(troupe: directors[1], UviewModel: UviewModel, navTitle: "Director", header: "Directed")) {
+                        VStack {
+                            Image("Zindre")
+                                .resizable()
+                                .frame(width: 100, height: 141)
+                            Text(directors[1].full_name ?? "Unknown Director")
+                                .padding(.horizontal, 30)
+                        }
+                        .padding(.horizontal)
+                    }.buttonStyle(PlainButtonStyle())
                     
                 }.padding(.vertical, 20)
                     .background(Color.gray.opacity(0.2))
@@ -232,23 +235,24 @@ struct CastView: View
                     Spacer()
                     HStack(spacing: 20)
                     {
-                        ForEach(actors) { actor in
-                                            NavigationLink(destination: TroupeDetailView(troupe: actor, UviewModel: UviewModel)) {
-                                                VStack {
-                                                    Image("Zindre")
-                                                        .resizable()
-                                                        .frame(width: 100, height: 141)
-                                                    Text(actor.full_name ?? "Unknown Actor")
-                                                        .padding(.horizontal, 30)
-                                                }
-                                                .padding(.horizontal)
-                                            }
-                                        }
+                        ForEach(actors) 
+                        { actor in
+                                NavigationLink(destination: TroupeDetailView(troupe: actor, UviewModel: UviewModel, navTitle: "Actor", header: "Played in")) {
+                                    VStack {
+                                        Image("Zindre")
+                                            .resizable()
+                                            .frame(width: 100, height: 141)
+                                        Text(actor.full_name ?? "Unknown Actor")
+                                            .padding(.horizontal, 30)
                                     }
-                                    .padding()
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(8)
-                                }
+                                    .padding(.horizontal)
+                                }.buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding()
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
+                    }
                 
                 Divider().padding(.horizontal, 20)
             }
@@ -289,36 +293,37 @@ struct FiveReviewsView: View
                     ReviewView(review: reviews[i])
                 }
                 
-                HStack 
+                HStack
                 {
                     NavigationLink(destination: AllReviewsView(MviewModel: MviewModel)) {
                         Text("Show All Reviews")
                             .font(.body)
                             .foregroundColor(.blue)
                     }
-                        
-                    }
+                    
+                    
                     
                     Spacer()
                     
                     Button(action: {
-                            showWriteReview.toggle()
-                        }) {
-                            Text("Write a Review")
-                                .font(.body)
-                                .foregroundColor(.blue)
-                        }
-                        .sheet(isPresented: $showWriteReview) {
-                            WriteReviewView(UviewModel: UviewModel, MviewModel: MviewModel)
-                        }
-                    
+                        showWriteReview.toggle()
+                    }) {
+                        Text("Write a Review")
+                            .font(.body)
+                            .foregroundColor(.blue)
+                    }
+                    .sheet(isPresented: $showWriteReview)
+                    {
+                        WriteReviewView(UviewModel: UviewModel, MviewModel: MviewModel, onReviewAdded: {MviewModel.getMovie(movieId: (MviewModel.singleMovie?._id)!)})
+                    }
                 }
-                .padding(.horizontal, 20)
+                
+            }.padding(.horizontal, 20)
                 .padding(.vertical, 10)
                 .padding(.bottom, 20)
-            }
             
         }
+    }
 }
 
 struct StarsView: View {
