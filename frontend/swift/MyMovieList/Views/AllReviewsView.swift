@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-struct AllReviewsView: View 
+//TODO SORTING REVIEWS
+struct AllReviewsView: View
 {
     @ObservedObject var MviewModel: MovieViewModel
 

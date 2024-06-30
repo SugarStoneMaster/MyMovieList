@@ -31,13 +31,13 @@ struct ContentView: View {
                 Text("Explore")
             }
             
-            SignInWithAppleButtonView().tabItem
+            /*SignInWithAppleButtonView().tabItem
             {
                 Image(systemName: "person.crop.circle")
                     .accessibilityAddTraits([.isButton])
                     .accessibilityLabel("Profile")
                 Text("Profile")
-            }
+            }*/
             
             
             

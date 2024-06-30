@@ -6,6 +6,7 @@ struct WriteReviewView: View {
     @State private var vote: Int = 0
     var UviewModel: UserViewModel
     var MviewModel: MovieViewModel
+    var onReviewAdded: () -> Void
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
@@ -28,7 +29,11 @@ struct WriteReviewView: View {
             .padding()
             Button(action: {
                 UviewModel.addReview(movieId: (MviewModel.singleMovie?._id)!, username: (UviewModel.user?.username)!, title: title, content: content, vote: vote)
-                presentationMode.wrappedValue.dismiss() // Close the modal
+                MviewModel.getMovie(movieId: (MviewModel.singleMovie?._id)!)
+                onReviewAdded() // Notify parent view to refresh
+                MviewModel.singleMovie?.reviews?.popLast()
+                MviewModel.singleMovie?.reviews?.insert(Review(title: title, content: content, vote: vote, user: UviewModel.user, date: Date()), at: 0)
+                presentationMode.wrappedValue.dismiss()
             }) {
                 Text("Submit")
                     .font(.body)
