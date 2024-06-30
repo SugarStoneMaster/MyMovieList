@@ -133,15 +133,17 @@ def get_movies(offset: int, items_per_page: int, text: Optional[str] = None, pro
             text_list = text.split(",")
 
             # Construct $or conditions for title, directors, and cast with $regex for partial and full name matching
-            or_conditions = [{"title": {"$regex": text, "$options": "i"}}]
+            or_conditions = [{"title": {"$regex": text.strip(), "$options": "i"}}]
 
             # For directors and cast matching
             director_or_conditions = []
             actors_or_conditions = []
 
             for term in text_list:
-                director_or_conditions.append({"directors.full_name": {"$regex": term, "$options": "i"}})
-                actors_or_conditions.append({"actors.full_name": {"$regex": term, "$options": "i"}})
+                term = term.strip()
+                if len(term) > 0:
+                    director_or_conditions.append({"directors.full_name": {"$regex": term.strip(), "$options": "i"}})
+                    actors_or_conditions.append({"actors.full_name": {"$regex": term.strip(), "$options": "i"}})
 
             # Add $in conditions if there are multiple terms
             if len(director_or_conditions) > 1:
