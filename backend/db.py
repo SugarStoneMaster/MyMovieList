@@ -251,7 +251,7 @@ def get_movie_reviews(offset: int, items_per_page: int = None, movie_id: str = N
         query = {"movie_id": ObjectId(movie_id)}
 
         # Paginate the query
-        return paginate_query(db.review, query, {}, offset, items_per_page)
+        return paginate_query(db.review, query, {}, offset, items_per_page, {"date": -1})
     except Exception as e:
         return e
 
@@ -468,7 +468,7 @@ def update_movie_review_stats(movie_id: str):
         {"$match": {"movie_id": ObjectId(movie_id)}},
         {"$group": {
             "_id": "$movie_id",
-            "average_vote": {"$avg": "$vote"},
+            "vote_average": {"$avg": "$vote"},
             "vote_count": {"$sum": 1}
         }}
     ]
@@ -476,7 +476,7 @@ def update_movie_review_stats(movie_id: str):
     result = list(db.review.aggregate(pipeline))
 
     if result:
-        average_vote = result[0]["average_vote"]
+        average_vote = result[0]["vote_average"]
         vote_count = result[0]["vote_count"]
     else:
         average_vote = 0  # Handle the case where there are no reviews
@@ -485,7 +485,7 @@ def update_movie_review_stats(movie_id: str):
     # Update the movie document with the vote count and average vote
     db.movie.update_one(
         {"_id": ObjectId(movie_id)},
-        {"$set": {"average_vote": average_vote, "vote_count": vote_count}}
+        {"$set": {"vote_average": round(average_vote, 2), "vote_count": vote_count}}
     )
 
     movie_review_count[movie_id] = 0

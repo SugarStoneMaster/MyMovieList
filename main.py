@@ -240,8 +240,37 @@ def main():
         movie_coll.delete_many({})
         close_connection(client)
         raise ValueError("No troupe data was inserted")
+    else:
+        troupe_groups = troupe_coll.aggregate([
+            {'$unwind': '$movies'},  # Unwind the movies array
+            {'$group': {
+                '_id': {
+                    'movie_id': '$movies._id',  # Group by movie_id from the movies array
+                    'troupe_type': '$type'  # Group by type
+                },
+                'troupes': {
+                    '$push': {
+                        '_id': '$_id',
+                        'full_name': '$full_name',
+                        'picture': '$picture'
+                    }
+                }
+            }}
+        ])
 
-    users_ids = user_coll.insert_many(users)
+        for group in troupe_groups:
+            movie_id = group['_id']['movie_id']
+            type_ = group['_id']['troupe_type']
+            troupes = group['troupes']
+
+            update_field = 'directors' if type_ == 'director' else 'actors'
+
+            movie_coll.update_one(
+                {'_id': movie_id},
+                {'$set': {update_field: troupes}}
+            )
+
+        users_ids = user_coll.insert_many(users)
 
     if users_ids.inserted_ids == 0:
         troupe_coll.delete_many({})
@@ -267,16 +296,35 @@ def main():
         raise ValueError("No review was inserted")
     else:
         # update movies with review array
-        movies_with_reviews = []
+        movie_vote_metrics = review_coll.aggregate([{
+            '$group': {
+                '_id': '$movie_id',
+                'vote_average': {'$avg': '$vote'},  # Calculate average rating
+                'vote_count': {'$sum': 1}  # Count number of reviews
+            }
+        }])
 
+        for metrics in movie_vote_metrics:
+            movie_id = metrics['_id']
+            vote_average = metrics['vote_average']
+            vote_count = metrics['vote_count']
+
+            # Update movie document in movie_collection
+            movie_coll.update_one(
+                {'_id': movie_id},
+                {'$set': {
+                    'vote_average': round(vote_average, 2),
+                    'vote_count': vote_count
+                }}
+            )
+
+        movies_with_reviews = []
         for movie in movies:
             if movie["reviews"] and len(movie["reviews"]) > 0:
                 movies_with_reviews.append(movie)
 
         for movie in movies_with_reviews:
-            movie_coll.update_one({"_id": movie["_id"]}, {"$set": {"reviews": movie["reviews"],
-                                                                   "vote_count": movie["vote_count"],
-                                                                   "vote_average": movie["vote_average"]}})
+            movie_coll.update_one({"_id": movie["_id"]}, {"$set": {"reviews": movie["reviews"]}})
 
     print(f"Inserted {len(movies_ids.inserted_ids)} movies\nInserted {len(troupe_ids.inserted_ids)} troupe data\n" +
           f"Inserted {len(users_ids.inserted_ids)} users\nInserted {len(review_ids.inserted_ids)} reviews")
