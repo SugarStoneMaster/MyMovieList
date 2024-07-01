@@ -7,10 +7,48 @@
 
 import SwiftUI
 
+enum UserListState {
+    case notInList
+    case toWatch
+    case watched
+    
+    mutating func toggle() {
+            switch self {
+            case .notInList:
+                self = .toWatch
+            case .toWatch:
+                self = .watched
+            case .watched:
+                self = .notInList
+            }
+        }
+}
+
+enum FavoriteState {
+    case notFavorite
+    case favorite
+    
+    mutating func toggle() {
+            switch self {
+            case .notFavorite:
+                self = .favorite
+            case .favorite:
+                self = .notFavorite
+            }
+        }
+}
+
+
+
+
+
 struct MovieView: View {
     @StateObject var MviewModel = MovieViewModel()
     @ObservedObject var UviewModel: UserViewModel
     let movieId: String
+
+    @State private var userListState: UserListState = .notInList
+    @State private var favoriteState: FavoriteState = .notFavorite
 
     var body: some View {
         NavigationStack {
@@ -37,6 +75,46 @@ struct MovieView: View {
                             .padding(.top, 3)
                             .padding(.horizontal, 15)
                             .multilineTextAlignment(.center)
+                        
+
+                        HStack(spacing: 40) {
+                            VStack {
+                                Button(action: toggleUserListState) {
+                                    Image(systemName: userListIcon)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 40, height: 40)
+                                        .padding()
+                                        .background(userListButtonColor)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(10)
+                                        .shadow(radius: 4)
+                                }
+                                Text(userListButtonText)
+                                    .foregroundColor(.primary)
+                                    .font(.caption)
+                                    .padding(.top, 2)
+                            }
+
+                            VStack {
+                                Button(action: toggleFavoriteState) {
+                                    Image(systemName: favoriteState == .favorite ? "star.fill" : "star")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 40, height: 40)
+                                        .padding()
+                                        .background(favoriteButtonColor)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(10)
+                                        .shadow(radius: 4)
+                                }
+                                Text("Favourite")
+                                    .foregroundColor(.primary)
+                                    .font(.caption)
+                                    .padding(.top, 2)
+                            }
+                        }
+                        .padding(.top, 10)
 
                         MainInfosMovieView(singleMovie: singleMovie)
 
@@ -58,21 +136,126 @@ struct MovieView: View {
 
                         OtherInfosView(companies: singleMovie.getCompanies(), languages: singleMovie.getLanguages())
 
-                        // Pass singleMovie's reviews directly
                         FiveReviewsView(reviews: singleMovie.reviews ?? [], UviewModel: UviewModel, MviewModel: MviewModel)
                     }
                     .padding(.vertical, 5)
-                }
-                .onAppear {
-                    MviewModel.getMovie(movieId: movieId)
                 }
             }
         }
         .onAppear {
             MviewModel.getMovie(movieId: movieId)
+            updateButtonStates()
         }
     }
+
+    // Toggle user list state
+    private func toggleUserListState() {
+        userListState.toggle()
+        if ((userListState == .notInList) || (userListState == .toWatch)) {
+            favoriteState = .notFavorite
+        }
+        updateUserListInViewModel()
+    }
+
+    // Toggle favorite state
+    private func toggleFavoriteState() {
+        favoriteState.toggle()
+        updateFavoriteInViewModel()
+    }
+
+    
+    private func updateButtonStates() {
+        if let movie = UviewModel.toWatchMovies.first(where: { $0._id == movieId }) {
+            userListState = .toWatch
+            favoriteState = .notFavorite
+        }
+        
+        if let movie = UviewModel.watchedMovies.first(where: { $0._id == movieId }) {
+            userListState = .watched
+            favoriteState = .notFavorite
+        }
+        
+        if let movie = UviewModel.favouriteMovies.first(where: { $0._id == movieId }) {
+            userListState = .watched
+            favoriteState = .favorite
+        }
+        
+        
+    }
+
+    
+    private func updateUserListInViewModel() {
+        switch userListState {
+        case .notInList:
+            UviewModel.deleteMovieFromUserList(movieId: movieId)
+        case .toWatch:
+            UviewModel.addMovieToUserList(movieId: movieId, title: (MviewModel.singleMovie?.title)!, poster: (MviewModel.singleMovie?.poster)!, watched: false, favourite: false)
+        case .watched:
+            UviewModel.updateMovieInUserList(movieId: movieId, watched: true, favourite: false)
+        }
+    }
+
+    
+    private func updateFavoriteInViewModel() {
+        var favoriteBool: Bool = false
+        if(favoriteState == .favorite)
+        {
+            favoriteBool = true
+        }
+        if(favoriteState == .notFavorite)
+        {
+            favoriteBool = false
+        }
+        
+        if(userListState == .notInList)
+        {
+            UviewModel.addMovieToUserList(movieId: movieId, title: (MviewModel.singleMovie?.title)!, poster: (MviewModel.singleMovie?.poster)!, watched: true, favourite: favoriteBool)
+        }
+        else
+        {
+            UviewModel.updateMovieInUserList(movieId: movieId, watched: true, favourite: favoriteBool)
+        }
+        
+        if favoriteState == .favorite {
+            userListState = .watched
+        }
+        
+        UviewModel.getMoviesUserList(watched: true, favourite: true)
+    }
+
+    // Button text based on the user list state
+    private var userListButtonText: String {
+        switch userListState {
+        case .notInList: return "Add to List"
+        case .toWatch: return "To Watch"
+        case .watched: return "Watched"
+        }
+    }
+    
+    // Button icon based on the user list state
+        private var userListIcon: String {
+            switch userListState {
+            case .notInList: return "plus.circle"
+            case .toWatch: return "clock"
+            case .watched: return "checkmark.circle"
+            }
+        }
+
+    // Button color based on the user list state
+    private var userListButtonColor: Color {
+        switch userListState {
+        case .notInList: return .blue
+        case .toWatch: return .orange
+        case .watched: return .green
+        }
+    }
+
+    // Favorite button color
+    private var favoriteButtonColor: Color {
+        return favoriteState == .favorite ? .yellow : .gray
+    }
 }
+
 
 
 
@@ -290,12 +473,12 @@ struct FiveReviewsView: View
             {
                 ForEach(0..<reviews.count, id: \.self)
                 { i in
-                    ReviewView(review: reviews[i])
+                    ReviewView(review: reviews[i], UviewModel: UviewModel, MviewModel: MviewModel)
                 }
                 
                 HStack
                 {
-                    NavigationLink(destination: AllReviewsView(MviewModel: MviewModel)) {
+                    NavigationLink(destination: AllReviewsView(MviewModel: MviewModel, UviewModel: UviewModel)) {
                         Text("Show All Reviews")
                             .font(.body)
                             .foregroundColor(.blue)
@@ -314,7 +497,7 @@ struct FiveReviewsView: View
                     }
                     .sheet(isPresented: $showWriteReview)
                     {
-                        WriteReviewView(UviewModel: UviewModel, MviewModel: MviewModel, onReviewAdded: {MviewModel.getMovie(movieId: (MviewModel.singleMovie?._id)!)})
+                        WriteReviewView(UviewModel: UviewModel, MviewModel: MviewModel)
                     }
                 }
                 

@@ -24,7 +24,7 @@ struct MyMovieListView: View {
                 VStack {
                     FilterPicker(selectedFilter: $selectedFilter)
                     
-                    MovieGrid(UviewModel: UviewModel, movies: UviewModel.movies)
+                    MovieGrid(UviewModel: UviewModel, selectedFilter: $selectedFilter, isFavoriteFilterActive: $isFavoriteFilterActive)
 
                 }
                 .background(Color(uiColor: .systemGray6))
@@ -38,18 +38,10 @@ struct MyMovieListView: View {
                     {
                         watched = true
                     }
-                    UviewModel.getMoviesUserList(watched: watched, favourite: isFavoriteFilterActive)
-                }
-                .onChange(of: selectedFilter) { newFilter in
-                    if(newFilter == .toWatch)
-                    {
-                        watched = false
-                    }
-                    else
-                    {
-                        watched = true
-                    }                    
-                    UviewModel.getMoviesUserList(watched: watched, favourite: isFavoriteFilterActive)
+                    UviewModel.getMoviesUserList(watched: false, favourite: false)
+                    UviewModel.getMoviesUserList(watched: true, favourite: false)
+                    UviewModel.getMoviesUserList(watched: true, favourite: true)
+
                 }
 
                 if selectedFilter == .watched {
@@ -59,8 +51,6 @@ struct MyMovieListView: View {
                             Spacer()
                             Button(action: {
                                 isFavoriteFilterActive.toggle()
-                                print("prova")
-                                UviewModel.getMoviesUserList(watched: true, favourite: isFavoriteFilterActive)
                             }) {
                                 Image(systemName: isFavoriteFilterActive ? "star.fill" : "star")
                                     .font(.system(size: 24))
@@ -95,26 +85,63 @@ struct FilterPicker: View {
 
 struct MovieGrid: View {
     @ObservedObject var UviewModel: UserViewModel
-    var movies: [Movie]
+    @Binding var selectedFilter: MovieFilter
+    @Binding var isFavoriteFilterActive: Bool
 
+
+    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVStack(spacing: 0) {
                 LazyVGrid(columns: [GridItem(.fixed(90), spacing: 20),
                                     GridItem(.fixed(90), spacing: 20),
                                     GridItem(.fixed(90), spacing: 20)], spacing: 10) {
-                    ForEach(movies) { movie in
-                        VStack {
-                            NavigationLink(destination: MovieView(UviewModel: UviewModel, movieId: movie._id!), label: {
-                                VStack {
-                                    AsyncImageView(url: movie.poster!, movie: movie)
-                                        .frame(width: 100, height: 141.4) // Adjust the size as needed
-                                        .cornerRadius(8)
-                                        .shadow(radius: 4)
-                                }
-                            })
+                    if(selectedFilter == .toWatch)
+                    {
+                        ForEach(UviewModel.toWatchMovies) { movie in
+                            VStack {
+                                NavigationLink(destination: MovieView(UviewModel: UviewModel, movieId: movie._id!), label: {
+                                    VStack {
+                                        AsyncImageView(url: movie.poster!, movie: movie)
+                                            .frame(width: 100, height: 141.4) // Adjust the size as needed
+                                            .cornerRadius(8)
+                                            .shadow(radius: 4)
+                                    }
+                                })
+                            }
                         }
                     }
+                    else if(selectedFilter == .watched && !isFavoriteFilterActive)
+                    {
+                        ForEach(UviewModel.watchedMovies) { movie in
+                            VStack {
+                                NavigationLink(destination: MovieView(UviewModel: UviewModel, movieId: movie._id!), label: {
+                                    VStack {
+                                        AsyncImageView(url: movie.poster!, movie: movie)
+                                            .frame(width: 100, height: 141.4) // Adjust the size as needed
+                                            .cornerRadius(8)
+                                            .shadow(radius: 4)
+                                    }
+                                })
+                            }
+                        }
+                    }
+                    else if(isFavoriteFilterActive)
+                    {
+                        ForEach(UviewModel.favouriteMovies) { movie in
+                            VStack {
+                                NavigationLink(destination: MovieView(UviewModel: UviewModel, movieId: movie._id!), label: {
+                                    VStack {
+                                        AsyncImageView(url: movie.poster!, movie: movie)
+                                            .frame(width: 100, height: 141.4) // Adjust the size as needed
+                                            .cornerRadius(8)
+                                            .shadow(radius: 4)
+                                    }
+                                })
+                            }
+                        }
+                    }
+                    
                 }
                 .padding(.top, 10)
             }

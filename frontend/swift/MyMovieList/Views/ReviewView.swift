@@ -7,24 +7,40 @@
 
 import SwiftUI
 
-struct ReviewView: View 
-{
+struct ReviewView: View {
     let review: Review
-    
-    var body: some View
-    {
-        VStack(alignment: .leading, spacing: 5)
-        {
-            Text(review.title!)
-                .font(.headline)
-                .padding(.bottom, 2)
+    @ObservedObject var UviewModel: UserViewModel
+    @ObservedObject var MviewModel: MovieViewModel
+    @State private var showEditReview = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(review.title!)
+                    .font(.headline)
+                    .padding(.bottom, 2)
+                
+                Spacer()
+                
+                if review.user?.username == UviewModel.user?.username {
+                    Button(action: {
+                        showEditReview.toggle()
+                    }) {
+                        Image(systemName: "pencil")
+                            .foregroundColor(.blue)
+                    }
+                    .sheet(isPresented: $showEditReview) {
+                        WriteReviewView(UviewModel: UviewModel, MviewModel: MviewModel, review: review)
+                    }
+                }
+            }
             
             Text(review.content!)
                 .font(.body)
                 .multilineTextAlignment(.leading)
             
             HStack {
-                StarsView(vote: review.vote!/2)
+                StarsView(vote: review.vote!)
                 Spacer()
                 Text((review.user?.username)!)
                     .font(.subheadline)
@@ -43,11 +59,7 @@ struct ReviewView: View
     }
 }
 
-
-
-
-private func formatDate(_ date: Date) -> String
-{
+private func formatDate(_ date: Date) -> String {
     let formatter = DateFormatter()
     formatter.dateStyle = .short
     return formatter.string(from: date)

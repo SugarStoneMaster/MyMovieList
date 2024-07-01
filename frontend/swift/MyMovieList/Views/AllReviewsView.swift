@@ -11,6 +11,7 @@ import SwiftUI
 struct AllReviewsView: View
 {
     @ObservedObject var MviewModel: MovieViewModel
+    @ObservedObject var UviewModel: UserViewModel
 
 
     var body: some View {
@@ -21,7 +22,7 @@ struct AllReviewsView: View
                 //ForEach(0..<reviews.count, id: \.self)
                 List(MviewModel.reviews)
                 { review in
-                    ReviewView(review: review)
+                    ReviewView(review: review, UviewModel: UviewModel, MviewModel: MviewModel)
                 }
             }
         }

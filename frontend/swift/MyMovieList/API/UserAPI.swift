@@ -14,7 +14,10 @@ class UserViewModel: ObservableObject
     
 
     
-    @Published var movies: [Movie] = []
+    @Published var toWatchMovies: [Movie] = []
+    @Published var watchedMovies: [Movie] = []
+    @Published var favouriteMovies: [Movie] = []
+
     @Published var reviews: [Review] = []
     @Published var user: User? = nil
     @Published var successMessage: String?
@@ -108,16 +111,26 @@ class UserViewModel: ObservableObject
                         }
 
                     
-                        if(self.errorMessage == nil)
+                       
+                        var addedMovie = Movie()
+                        addedMovie._id = movieId
+                        addedMovie.title = title
+                        addedMovie.poster = poster
+                        addedMovie.watched = watched
+                        addedMovie.favourite = favourite
+                        if(!watched)
                         {
-                            var addedMovie = Movie()
-                            addedMovie._id = movieId
-                            addedMovie.title = title
-                            addedMovie.poster = poster
-                            addedMovie.watched = watched
-                            addedMovie.favourite = favourite
-                            self.movies.append(addedMovie)
+                            self.toWatchMovies.append(addedMovie)
                         }
+                        else if(watched && !favourite)
+                        {
+                            self.watchedMovies.append(addedMovie)
+                        }
+                        else if(favourite)
+                        {
+                            self.favouriteMovies.append(addedMovie)
+                        }
+                        
                         
                         self.isLoading = false
                         
@@ -222,7 +235,10 @@ class UserViewModel: ObservableObject
                         } else if let message = apiResponse.message {
                             self.successMessage = message
                             // Optionally, remove the movie from the movies array
-                            self.movies.removeAll { $0._id == movieId }
+                            self.toWatchMovies.removeAll { $0._id == movieId }
+                            self.watchedMovies.removeAll { $0._id == movieId }
+                            self.favouriteMovies.removeAll { $0._id == movieId }
+
                         }
                     } catch {
                         self.errorMessage = "Error decoding JSON: \(error.localizedDescription)"
@@ -246,7 +262,18 @@ class UserViewModel: ObservableObject
                    do {
                        let movies = try JSONDecoder().decode([Movie].self, from: data)
                        DispatchQueue.main.async {
-                           self.movies = movies
+                           if(!watched)
+                           {
+                               self.toWatchMovies = movies
+                           }
+                           else if(watched && !favourite)
+                           {
+                               self.watchedMovies = movies
+                           }
+                           else if(favourite)
+                           {
+                               self.favouriteMovies = movies
+                           }
                        }
                    } catch {
                        print("Error decoding JSON: \(error)")
@@ -258,63 +285,62 @@ class UserViewModel: ObservableObject
        }
     
     
-    func addReview(movieId: String, username: String, title: String, content: String, vote: Int)
-    {
-        guard let url = URL(string: baseUrl + urlSub + "add_review/\(movieId)") else {
-                    self.errorMessage = "Invalid URL"
-                    return
-                }
+    func addReview(movieId: String, username: String, title: String, content: String, vote: Int, completion: @escaping () -> Void) {
+            guard let url = URL(string: baseUrl + urlSub + "add_review/\(movieId)") else {
+                self.errorMessage = "Invalid URL"
+                return
+            }
 
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [
-                    "username": username,
-                    "user_id": user!._id!,
-                    "title": title,
-                    "content": content,
-                    "vote": String(vote)
-                ]
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            let body: [String: Any] = [
+                "username": username,
+                "user_id": user!._id!,
+                "title": title,
+                "content": content,
+                "vote": String(vote)
+            ]
 
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-                } catch {
-                    self.errorMessage = "Failed to encode JSON"
-                    return
-                }
+            do {
+                request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+            } catch {
+                self.errorMessage = "Failed to encode JSON"
+                return
+            }
 
-                self.isLoading = true
-                self.successMessage = nil
-                self.errorMessage = nil
+            self.isLoading = true
+            self.successMessage = nil
+            self.errorMessage = nil
 
-                URLSession.shared.dataTask(with: request) { data, response, error in
-                    DispatchQueue.main.async {
-
-                        if let error = error {
-                            self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
-                            return
-                        }
-
-                        guard let data = data else {
-                            self.errorMessage = "No data received"
-                            return
-                        }
-
-                    
-                        if(self.errorMessage == nil)
-                        {
-                            var addedReview = Review(title: title, content: content,  vote: vote, user: User(_id: self.user!._id!, username: username))
-                            self.reviews.append(addedReview)
-                        }
-                        
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        self.errorMessage = "HTTP request failed: \(error.localizedDescription)"
                         self.isLoading = false
-                        
+                        return
                     }
-                }.resume()
-    }
+
+                    guard let data = data else {
+                        self.errorMessage = "No data received"
+                        self.isLoading = false
+                        return
+                    }
+
+                    // Handle successful response
+                    if self.errorMessage == nil {
+                        let addedReview = Review(title: title, content: content, vote: vote, user: User(_id: self.user!._id!, username: username))
+                        self.reviews.append(addedReview)
+                    }
+
+                    self.isLoading = false
+                    completion() // Call the completion handler
+                }
+            }.resume()
+        }
     
     
-    func updateReview(reviewId: String, title: String, content: String, vote: Int)
+    func updateReview(reviewId: String, title: String, content: String, vote: Int, completion: @escaping () -> Void)
     {
         guard let url = URL(string: baseUrl + urlSub + "update_review/\(reviewId)") else {
                     self.errorMessage = "Invalid URL"
@@ -355,12 +381,10 @@ class UserViewModel: ObservableObject
                         }
 
                     
-                        if(self.errorMessage == nil)
-                        {
-                            
-                        }
+                        
                         
                         self.isLoading = false
+                        completion()
                         
                     }
                 }.resume()

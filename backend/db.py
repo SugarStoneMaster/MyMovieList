@@ -446,25 +446,51 @@ def add_review(user_id: str, username: str, movie_id: str, title: str, content: 
 
 def update_review(review_id: str, title: str, content: str, vote: float):
     review = db.review.find_one({"_id": ObjectId(review_id)})
-    result = db.review.update_one({"_id": ObjectId(review_id)}, {
-        "$set": {
-            "title": title,
-            "content": content,
-            "vote": vote
+
+    if not review:
+        return False  # Return False if the review does not exist
+
+    # Update the review document in the review collection
+    result = db.review.update_one(
+        {"_id": ObjectId(review_id)},
+        {
+            "$set": {
+                "title": title,
+                "content": content,
+                "vote": vote
+            }
         }
-    })
+    )
 
-    if review["vote"] != vote:
-        if review["movie_id"] in movie_review_count:
-            movie_review_count[review["movie_id"]] += 1
+    if review["movie_id"] in movie_review_count:
+        movie_review_count[review["movie_id"]] += 1
 
-            if movie_review_count[review["movie_id"]] >= 5:
-                update_movie_review_stats(review["movie_id"])
-        else:
-            movie_review_count[review["movie_id"]] = 1
+        if movie_review_count[review["movie_id"]] >= 5:
+            update_movie_review_stats(review["movie_id"])
+    else:
+        movie_review_count[review["movie_id"]] = 1
+
+    # Find the movie document and update the specific review inside the reviews array
+    movie = db.movie.find_one({"_id": ObjectId(review["movie_id"])}, {"reviews": 1})
+    if movie:
+        movie_reviews = movie.get("reviews", [])
+
+        # Find the index of the review in the movie's reviews array
+        review_index = next((index for (index, d) in enumerate(movie_reviews) if d["_id"] == ObjectId(review_id)), None)
+
+        if review_index is not None:
+            # Update the specific review in the reviews array
+            movie_reviews[review_index]["title"] = title
+            movie_reviews[review_index]["content"] = content
+            movie_reviews[review_index]["vote"] = vote
+
+            # Update the movie document with the modified reviews array
+            db.movie.update_one(
+                {"_id": ObjectId(review["movie_id"])},
+                {"$set": {"reviews": movie_reviews}}
+            )
 
     return result.modified_count > 0
-
 
 def update_movie_review_stats(movie_id: str):
     pipeline = [

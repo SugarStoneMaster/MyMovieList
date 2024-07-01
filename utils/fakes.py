@@ -4,7 +4,7 @@ from faker import Faker
 fake = Faker()
 
 
-def generate_user_movie_list(movies, num_movies: int = 5):
+def generate_user_movie_list(movies, num_movies: int = 50):
     movie_list = []
     user_movies = random.sample(movies, num_movies)
 
@@ -29,7 +29,7 @@ def generate_user_movie_list(movies, num_movies: int = 5):
     return movie_list
 
 
-def generate_user(movies: list[dict], num_movies_per_user: int = 5, n: int = 200) -> list[dict]:
+def generate_user(movies: list[dict], num_movies_per_user: int = 50, n: int = 200) -> list[dict]:
     users = []
     for _ in range(n):
         user = {
@@ -46,7 +46,7 @@ def generate_reviews(users: list[dict], movies: list[dict], n: int = 1000) -> li
     reviews = []
     for _ in range(n):
         movie = random.choice(movies)
-        vote = random.randint(0, 10)
+        vote = random.randint(0, 5)
 
         review = {
             "user": random.choice(users),

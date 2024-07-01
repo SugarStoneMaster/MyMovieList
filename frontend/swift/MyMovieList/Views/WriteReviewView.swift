@@ -1,17 +1,26 @@
 import SwiftUI
 
 struct WriteReviewView: View {
-    @State private var title: String = ""
-    @State private var content: String = ""
-    @State private var vote: Int = 0
-    var UviewModel: UserViewModel
-    var MviewModel: MovieViewModel
-    var onReviewAdded: () -> Void
+    @State private var title: String
+    @State private var content: String
+    @State private var vote: Int
+    @ObservedObject var UviewModel: UserViewModel
+    @ObservedObject var MviewModel: MovieViewModel
+    var review: Review?
     @Environment(\.presentationMode) var presentationMode
+
+    init(UviewModel: UserViewModel, MviewModel: MovieViewModel, review: Review? = nil) {
+        self.UviewModel = UviewModel
+        self.MviewModel = MviewModel
+        self.review = review
+        _title = State(initialValue: review?.title ?? "")
+        _content = State(initialValue: review?.content ?? "")
+        _vote = State(initialValue: review?.vote ?? 0)
+    }
 
     var body: some View {
         VStack {
-            Text("Write a Review")
+            Text(review == nil ? "Write a Review" : "Edit Review")
                 .font(.title)
                 .padding()
             TextField("Title", text: $title)
@@ -28,11 +37,18 @@ struct WriteReviewView: View {
             }
             .padding()
             Button(action: {
-                UviewModel.addReview(movieId: (MviewModel.singleMovie?._id)!, username: (UviewModel.user?.username)!, title: title, content: content, vote: vote)
-                MviewModel.getMovie(movieId: (MviewModel.singleMovie?._id)!)
-                onReviewAdded() // Notify parent view to refresh
-                MviewModel.singleMovie?.reviews?.popLast()
-                MviewModel.singleMovie?.reviews?.insert(Review(title: title, content: content, vote: vote, user: UviewModel.user, date: Date()), at: 0)
+                if let review = review {
+                    UviewModel.updateReview(reviewId: review._id!, title: title, content: content, vote: vote)
+                    {
+                        MviewModel.getMovie(movieId: (MviewModel.singleMovie?._id)!)
+                    }
+                } else {
+                    UviewModel.addReview(movieId: (MviewModel.singleMovie?._id)!, username: (UviewModel.user?.username)!, title: title, content: content, vote: vote) 
+                    {
+                        MviewModel.getMovie(movieId: (MviewModel.singleMovie?._id)!)
+                    }
+                }
+                
                 presentationMode.wrappedValue.dismiss()
             }) {
                 Text("Submit")
@@ -47,7 +63,7 @@ struct WriteReviewView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Write Review")
+        .navigationTitle(review == nil ? "Write Review" : "Edit Review")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

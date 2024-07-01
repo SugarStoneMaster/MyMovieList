@@ -192,7 +192,13 @@ class MovieViewModel: ObservableObject
                        let reviews = try JSONDecoder().decode([Review].self, from: jsonData)
                        
                        DispatchQueue.main.async {
-                           self.reviews = reviews // Make sure `self.reviews` is defined and accessible
+                           self.reviews = reviews
+                           self.reviews.sort { (review1, review2) -> Bool in
+                                       guard let date1 = review1.date, let date2 = review2.date else {
+                                           return false
+                                       }
+                                       return date1 > date2
+                                   }
                        }
                    } catch {
                        print("Error decoding JSON: \(error)")
@@ -218,6 +224,13 @@ class MovieViewModel: ObservableObject
                        let singleMovie = try JSONDecoder().decode(Movie.self, from: data)
                        DispatchQueue.main.async {
                            self.singleMovie = singleMovie
+                           self.singleMovie!.reviews?.sort { (review1, review2) -> Bool in
+                                       guard let date1 = review1.date, let date2 = review2.date else {
+                                           return false
+                                       }
+                                       return date1 > date2
+                                   }
+                           
                        }
                    } catch {
                        print("Error decoding JSON: \(error)")
