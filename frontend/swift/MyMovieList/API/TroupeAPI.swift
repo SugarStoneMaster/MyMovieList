@@ -18,7 +18,6 @@ class TroupeViewModel: ObservableObject
     @Published var isLoading: Bool = false
     
     
-    //TODO da testare e richiamare ogni volta che la search bar cambia
     func getTroupe(troupeId: String)
     {
         guard let url = URL(string: baseUrl + urlSub + "get_troupe/\(troupeId)") else {

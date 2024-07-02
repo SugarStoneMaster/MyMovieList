@@ -9,10 +9,10 @@ import SwiftUI
 
 struct AsyncImageView: View {
     @StateObject private var loader: AsyncImageLoader
-    @ObservedObject var movie: Movie
+    var movie: Movie?
     private let url: String
 
-    init(url: String, movie: Movie) {
+    init(url: String, movie: Movie? = nil) {
         self.url = url
         self.movie = movie
         _loader = StateObject(wrappedValue: AsyncImageLoader())
@@ -30,7 +30,10 @@ struct AsyncImageView: View {
         }
         .onAppear {
             loader.loadImage(from: url)
-            movie.posterByte = loader.image
+            if(movie != nil)
+            {
+                movie!.posterByte = loader.image
+            }
         }
     }
 }

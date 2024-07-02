@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct MyMovieListApp: App {
-    @StateObject var UviewModel = UserViewModel(user: User(_id: "66830877c52e5d1e2f042414", username: "pippotanto"))
+    @StateObject var UviewModel = UserViewModel(user: User(_id: "668463a8919ba0235e530855", username: "pippotanto"))
     
     var body: some Scene {
         WindowGroup {

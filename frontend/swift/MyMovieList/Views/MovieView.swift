@@ -78,25 +78,34 @@ struct MovieView: View {
                         
 
                         HStack(spacing: 40) {
-                            VStack {
-                                Button(action: toggleUserListState) {
-                                    Image(systemName: userListIcon)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 40, height: 40)
-                                        .padding()
-                                        .background(userListButtonColor)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(10)
-                                        .shadow(radius: 4)
+                            VStack 
+                            {
+                                ZStack(alignment: .topTrailing) {
+                                    Button(action: toggleUserListState) {
+                                        Image(systemName: userListIcon)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(width: 40, height: 40)
+                                            .padding()
+                                            .background(userListButtonColor)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(10)
+                                            .shadow(radius: 4)
+                                    }
+                                    if userListState == .toWatch {
+                                        CountBadge(count: singleMovie.added_count ?? 0)
+                                    } else if userListState == .watched {
+                                        CountBadge(count: singleMovie.watched_count ?? 0)
+                                    }
                                 }
                                 Text(userListButtonText)
                                     .foregroundColor(.primary)
                                     .font(.caption)
                                     .padding(.top, 2)
                             }
-
-                            VStack {
+                            
+                            VStack
+                            {
                                 Button(action: toggleFavoriteState) {
                                     Image(systemName: favoriteState == .favorite ? "star.fill" : "star")
                                         .resizable()
@@ -258,7 +267,19 @@ struct MovieView: View {
 
 
 
-
+struct CountBadge: View {
+    let count: Int
+    
+    var body: some View {
+        Text("\(count)")
+            .font(.caption)  
+            .padding(8)
+            .background(Color.red)
+            .foregroundColor(.white)
+            .clipShape(Circle())
+            .offset(x: 15, y: -10)
+    }
+}
 
 struct MainInfosMovieView: View {
     var singleMovie: Movie
@@ -277,7 +298,12 @@ struct MainInfosMovieView: View {
                     VStack
                     {
                         Text("Vote").bold()
-                        Text(String(format: "%.1f", singleMovie.vote_average!))
+                        HStack
+                        {
+                            Text("\(String(format: "%.1f", singleMovie.vote_average!))/\(Int(5)) ")
+                                        + Text(Image(systemName: "star.fill"))
+                                        .foregroundColor(.yellow)
+                        }.font(.body)
                     }
                     .padding(.horizontal)
                     
@@ -313,7 +339,7 @@ struct MainInfosMovieView: View {
                     VStack
                     {
                         Text("Budget").bold()
-                        Text("$\(singleMovie.budget!/1000000)M")
+                        Text("$\(Int(singleMovie.budget!/1000000)) M")
                     }
                     .padding(.horizontal)
                     
@@ -322,7 +348,7 @@ struct MainInfosMovieView: View {
                     VStack
                     {
                         Text("Revenue").bold()
-                        Text("$\(singleMovie.revenue!/1000000)M")
+                        Text("$\(Int(singleMovie.revenue!/1000000)) M")
                     }
                     .padding(.horizontal)
                 }
@@ -356,8 +382,7 @@ struct DirectorsView: View
             {
                 NavigationLink(destination: TroupeDetailView(troupe: directors[0], UviewModel: UviewModel, navTitle: "Director", header: "Directed")) {
                     VStack {
-                        Image("Zindre")
-                            .resizable()
+                        AsyncImageView(url: directors[0].picture ?? "Zindre")
                             .frame(width: 100, height: 141)
                         Text(directors[0].full_name ?? "Unknown Director")
                             .padding(.horizontal, 0)
@@ -375,8 +400,7 @@ struct DirectorsView: View
                 {
                     NavigationLink(destination: TroupeDetailView(troupe: directors[1], UviewModel: UviewModel, navTitle: "Director", header: "Directed")) {
                         VStack {
-                            Image("Zindre")
-                                .resizable()
+                            AsyncImageView(url: directors[1].picture ?? "Zindre")
                                 .frame(width: 100, height: 141)
                             Text(directors[1].full_name ?? "Unknown Director")
                                 .padding(.horizontal, 30)
@@ -422,8 +446,7 @@ struct CastView: View
                         { actor in
                                 NavigationLink(destination: TroupeDetailView(troupe: actor, UviewModel: UviewModel, navTitle: "Actor", header: "Played in")) {
                                     VStack {
-                                        Image("Zindre")
-                                            .resizable()
+                                        AsyncImageView(url: actor.picture!)
                                             .frame(width: 100, height: 141)
                                         Text(actor.full_name ?? "Unknown Actor")
                                             .padding(.horizontal, 30)
