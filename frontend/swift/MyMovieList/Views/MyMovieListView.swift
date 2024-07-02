@@ -15,33 +15,34 @@ struct MyMovieListView: View {
     @State private var watched = false
     @ObservedObject var UviewModel: UserViewModel
 
-    
-    
-
     var body: some View {
         NavigationStack {
-            ZStack {
+            GeometryReader { geometry in
                 VStack {
                     FilterPicker(selectedFilter: $selectedFilter)
-                    
-                    MovieGrid(UviewModel: UviewModel, selectedFilter: $selectedFilter, isFavoriteFilterActive: $isFavoriteFilterActive)
 
+                    TabView(selection: $selectedFilter) {
+                        MovieGrid(UviewModel: UviewModel, selectedFilter: .constant(.toWatch), isFavoriteFilterActive: $isFavoriteFilterActive)
+                            .tag(MovieFilter.toWatch)
+                            .background(Color(uiColor: .systemGray6))
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                        
+                        MovieGrid(UviewModel: UviewModel, selectedFilter: .constant(.watched), isFavoriteFilterActive: $isFavoriteFilterActive)
+                            .tag(MovieFilter.watched)
+                            .background(Color(uiColor: .systemGray6))
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    .onChange(of: selectedFilter) { newFilter in
+                        watched = (newFilter == .watched)
+                    }
                 }
                 .background(Color(uiColor: .systemGray6))
                 .navigationTitle("My List")
                 .onAppear {
-                    if(selectedFilter == .toWatch)
-                    {
-                        watched = false
-                    }
-                    else
-                    {
-                        watched = true
-                    }
                     UviewModel.getMoviesUserList(watched: false, favourite: false)
                     UviewModel.getMoviesUserList(watched: true, favourite: false)
                     UviewModel.getMoviesUserList(watched: true, favourite: true)
-
                 }
 
                 if selectedFilter == .watched {
@@ -88,8 +89,6 @@ struct MovieGrid: View {
     @Binding var selectedFilter: MovieFilter
     @Binding var isFavoriteFilterActive: Bool
 
-
-    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             LazyVStack(spacing: 0) {
@@ -144,10 +143,10 @@ struct MovieGrid: View {
                     
                 }
                 .padding(.top, 10)
+                .padding(.bottom, 50) // Add padding at the bottom
             }
             .padding(.horizontal)
         }
     }
 }
-
 
