@@ -24,12 +24,12 @@ struct MyMovieListView: View {
                     TabView(selection: $selectedFilter) {
                         MovieGrid(UviewModel: UviewModel, selectedFilter: .constant(.toWatch), isFavoriteFilterActive: $isFavoriteFilterActive)
                             .tag(MovieFilter.toWatch)
-                            .background(Color(uiColor: .systemGray6))
+                            .background(Color(uiColor: .black))
                             .frame(width: geometry.size.width, height: geometry.size.height)
                         
                         MovieGrid(UviewModel: UviewModel, selectedFilter: .constant(.watched), isFavoriteFilterActive: $isFavoriteFilterActive)
                             .tag(MovieFilter.watched)
-                            .background(Color(uiColor: .systemGray6))
+                            .background(Color(uiColor: .black))
                             .frame(width: geometry.size.width, height: geometry.size.height)
                     }
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
@@ -37,7 +37,7 @@ struct MyMovieListView: View {
                         watched = (newFilter == .watched)
                     }
                 }
-                .background(Color(uiColor: .systemGray6))
+                .background(Color(uiColor: .black))
                 .navigationTitle("My List")
                 .onAppear {
                     UviewModel.getMoviesUserList(watched: false, favourite: false)
@@ -142,7 +142,7 @@ struct MovieGrid: View {
                     }
                     
                 }
-                .padding(.top, 10)
+                .padding(.top, 50)
                 .padding(.bottom, 50) // Add padding at the bottom
             }
             .padding(.horizontal)

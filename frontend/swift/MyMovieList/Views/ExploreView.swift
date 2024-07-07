@@ -53,8 +53,9 @@ struct ExploreView: View {
                         
                     
                 }
+
                 
-            }.navigationTitle("Explore")
+            }.navigationTitle("Explore").background(Color.black.opacity(0.9))
         }.onAppear
         {
             if(!loadeadAlready)

@@ -82,7 +82,7 @@ db = LocalProxy(get_db)
 
 default_projection = {"_id": 1, "title": 1, "poster": 1, "release_year": 1, "popularity": 1, "vote_average": 1}
 
-APPROXIMATION_COUNT = 5
+APPROXIMATION_COUNT = 10
 movie_review_count = Singleton()
 movie_added_count = Singleton()
 movie_watched_count = Singleton()
