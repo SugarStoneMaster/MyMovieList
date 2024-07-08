@@ -1,5 +1,5 @@
 <p align="center">
-     <img width="200" src="https://github.com/SugarStoneMaster/MyMovieList/assets/58223071/9ce5f855-2f55-4dea-b6b1-24911ce02a71" alt="CineList logo">
+     <img width="150" src="https://github.com/SugarStoneMaster/MyMovieList/assets/58223071/9ce5f855-2f55-4dea-b6b1-24911ce02a71" alt="CineList logo">
 </p>
 
 <p align="center">
@@ -38,6 +38,13 @@ Are you a movie enthusiast looking to keep track of the films you've watched or 
 - **Watchlist Management:** Easily add movies to your "Watched" or "Want to Watch" lists.
 - **Movie Ratings:** Rate the movies you've seen and share your opinions.
 - **Discover New Films:** Get recommendations based on your watchlist and ratings.
+
+
+
+<div align="center">
+<video src="https://github.com/SugarStoneMaster/MyMovieList/assets/58223071/d9088b89-de37-4ac0-bb80-7ac67e7c3a94" controls></video>
+</div>
+
 
 # Documentation
 
