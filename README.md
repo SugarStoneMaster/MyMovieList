@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+     <b>CineList</b><br>
  Are you a movie enthusiast looking to keep track of the films you've watched or plan to watch? Look no further! 🎥 🥳
 </p>
 
